@@ -63,3 +63,8 @@ UserSchema.methods.isValidPassword = async function (password) {
 
 const user = mongoose.model('User', UserSchema)
 module.exports = user
+<<<<<<< HEAD
+=======
+
+//Add admin role
+>>>>>>> 0b1847d2d255b4aa7477c63be969714165fecbc5
