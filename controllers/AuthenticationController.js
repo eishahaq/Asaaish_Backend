@@ -25,29 +25,31 @@ const AuthenticationController = {
                 email: result.email
             });
 
+            if (result.role === 'Vendor' && req.payload.role !== 'Admin') {
+                throw createError.Forbidden("Only admins can create vendor accounts");
+            }
+
             const savedUser = await user.save();
             console.log('User created:', savedUser);
 
-            // Additional logic for Customer or Vendor
             if (result.role === 'Customer') {
                 console.log('Creating customer...');
                 const customer = new Customer({
-                  user: savedUser._id
+                    user: savedUser._id
                 });
-          
+
                 const savedCustomer = await customer.save();
                 console.log('Customer created:', savedCustomer);
-            } else if (result.role === 'Vendor') {
+            } else if (result.role === 'Vendor' && req.payload.role === 'Admin') {
                 console.log('Creating vendor...');
                 const vendor = new Vendor({
                     user: savedUser._id,
                     brand: result.brandId, // Adjust to match the actual request field
                     stores: result.stores, // This should be an array of store ObjectId's
-                  });
-            
-          
-                await vendor.save();
-                console.log('Vendor created:', vendor);
+                });
+
+                const savedVendor = await vendor.save();
+                console.log('Vendor created:', savedVendor);
             }
 
             const accessToken = await signAccessToken(savedUser.id);

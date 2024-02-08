@@ -1,11 +1,18 @@
 const express = require('express');
-const router = express.Router();
-const BrandController = require('../controllers/BrandController');
+const BrandController = require('../controllers/BrandController'); 
+const { verifyAccessToken } = require('../Helpers/JwtHelper')
 
-router.post('/createbrands', BrandController.createBrand);
-router.get('/getbrands', BrandController.getAllBrands);
+const router = express.Router();
+
+router.post('/brands', verifyAccessToken, BrandController.createBrand);
+
+router.get('/brands', BrandController.getAllBrands);
+
 router.get('/brands/:id', BrandController.getBrandById);
-router.put('/brands/:id', BrandController.updateBrand);
-router.delete('/deletebrands/:id', BrandController.deleteBrand);
+
+router.put('/brands/:id', verifyAccessToken, BrandController.updateBrand);
+
+// DELETE request to delete a brand
+router.delete('/brands/:id', verifyAccessToken, BrandController.deleteBrand);
 
 module.exports = router;
