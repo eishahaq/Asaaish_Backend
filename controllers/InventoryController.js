@@ -50,7 +50,7 @@ const InventoryController = {
             const user = await User.findById(userId);
 
             if (user.role === 'Customer') {
-                throw createError.Forbidden("Only admins and vendors can access inventory my store");
+                throw createError.Forbidden("Only admins and vendors can access inventory by store");
             }
             const inventory = await Inventory.find({ storeId: req.params.storeId }).populate('productId');
             if (!inventory) throw createError.NotFound('Inventory not found for given store');
