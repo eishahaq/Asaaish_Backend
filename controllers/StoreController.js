@@ -5,9 +5,10 @@ const StoreController = {
     // Create a new store
     async createStore(req, res, next) {
         try {
-            const { brandId, location, address, contactInfo } = req.body;
+            const { name, brand, location, address, contactInfo } = req.body;
             const store = new Store({
-                brandId,
+                name,
+                brand,
                 location: {
                   type: 'Point',
                   coordinates: location.coordinates // Expect coordinates as [longitude, latitude]
@@ -25,7 +26,7 @@ const StoreController = {
     // Fetch all stores
     async getAllStores(req, res, next) {
         try {
-            const stores = await Store.find().populate('brandId');
+            const stores = await Store.find().populate('brand');
             res.status(200).json(stores);
         } catch (error) {
             next(error);
@@ -35,7 +36,7 @@ const StoreController = {
     // Fetch a single store by ID
     async getStoreById(req, res, next) {
         try {
-            const store = await Store.findById(req.params.id).populate('brandId');
+            const store = await Store.findById(req.params.id).populate('brand');
             if (!store) throw createError.NotFound('Store not found');
             res.status(200).json(store);
         } catch (error) {
