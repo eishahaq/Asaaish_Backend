@@ -41,7 +41,7 @@ const AuthenticationController = {
                 console.log('Creating vendor...');
                 const vendor = new Vendor({
                     user: savedUser._id,
-                    brand: result.brandId, // Adjust to match the actual request field
+                    brand: result.brand, // Adjust to match the actual request field
                     stores: result.stores, // This should be an array of store ObjectId's
                   });
             

@@ -1,20 +1,25 @@
-const Brand = require('../Models/Brand'); // Adjust the path as necessary
+const Brand = require('../Models/Brand');
 const createError = require('http-errors');
+const User = require('../Models/User');
 
 const BrandController = {
-    // Create a new brand
-   async createBrand(req, res, next) {
+    
+    async createBrand(req, res, next) {
         try {
-            const { name, description, logoUrl } = req.body;
-            if (!name) throw createError.BadRequest('Brand name is required');
-            const doesExist = await Brand.findOne({ name: name });
-            if (doesExist) throw createError.Conflict(`${name} is already registered as a brand`);
+            const userId = req.payload.aud;
+            const user = await User.findById(userId);
+    
+            if (user.role === 'Customer') {
+                throw createError.Forbidden("Only admins and vendors can create brands");
+            }
 
-            const brand = new Brand({
-                name,
-                description,
-                logoUrl
-            });
+            const { name, description, logoUrl } = req.body;
+            const doesExist = await Brand.findOne({ name });
+            if (doesExist) {
+                throw createError.Conflict(`${name} is already registered`);
+            }
+
+            const brand = new Brand({ name, description, logoUrl });
             const savedBrand = await brand.save();
             res.status(201).json(savedBrand);
         } catch (error) {
@@ -22,21 +27,24 @@ const BrandController = {
         }
     },
 
-    // Fetch all brands
+    // Get all brands
     async getAllBrands(req, res, next) {
         try {
-            const brands = await Brand.find();
+            const brands = await Brand.find({});
             res.status(200).json(brands);
         } catch (error) {
             next(error);
         }
     },
 
-    // Fetch a single brand by ID
+    // Get a single brand by ID
     async getBrandById(req, res, next) {
         try {
-            const brand = await Brand.findById(req.params.id);
-            if (!brand) throw createError.NotFound('Brand not found');
+            const brandId = req.params.id;
+            const brand = await Brand.findById(brandId);
+            if (!brand) {
+                throw createError.NotFound("Brand not found");
+            }
             res.status(200).json(brand);
         } catch (error) {
             next(error);
@@ -46,9 +54,20 @@ const BrandController = {
     // Update a brand
     async updateBrand(req, res, next) {
         try {
-            const updatedBrand = await Brand.findByIdAndUpdate(req.params.id, req.body, { new: true });
-            if (!updatedBrand) throw createError.NotFound('Brand not found');
-            res.status(200).json(updatedBrand);
+            const userId = req.payload.aud;
+            const user = await User.findById(userId);
+    
+            if (user.role === 'Customer') {
+                throw createError.Forbidden("Only admins and vendors can update brands");
+            }
+
+            const brandId = req.params.id;
+            const updates = req.body;
+            const brand = await Brand.findByIdAndUpdate(brandId, updates, { new: true });
+            if (!brand) {
+                throw createError.NotFound("Brand not found");
+            }
+            res.status(200).json(brand);
         } catch (error) {
             next(error);
         }
@@ -57,9 +76,19 @@ const BrandController = {
     // Delete a brand
     async deleteBrand(req, res, next) {
         try {
-            const deletedBrand = await Brand.findByIdAndDelete(req.params.id);
-            if (!deletedBrand) throw createError.NotFound('Brand not found');
-            res.status(200).json({ message: 'Brand successfully deleted' });
+            const userId = req.payload.aud;
+            const user = await User.findById(userId);
+    
+            if (user.role === 'Customer') {
+                throw createError.Forbidden("Only admins and vendors can delete brands");
+            }
+
+            const brandId = req.params.id;
+            const brand = await Brand.findByIdAndDelete(brandId);
+            if (!brand) {
+                throw createError.NotFound("Brand not found");
+            }
+            res.status(200).json({ message: "Brand successfully deleted" });
         } catch (error) {
             next(error);
         }

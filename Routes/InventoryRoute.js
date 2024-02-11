@@ -1,12 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const InventoryController = require('../controllers/InventoryController');
+const { verifyAccessToken } = require('../Helpers/JwtHelper');
 
 // Routes for inventory operations
-router.post('/createinventory', InventoryController.addInventory); // Add new inventory
-router.get('/getinventory/product/:productId', InventoryController.getInventoryByProduct); // Get inventory by product ID
-router.get('/getinventory/store/:storeId', InventoryController.getInventoryByStore); // Get inventory by store ID
-router.put('/getinventory/:id', InventoryController.updateInventory); // Update inventory
-router.delete('/getinventory/:id', InventoryController.deleteInventory); // Delete inventory
+
+router.post('/createinventory', verifyAccessToken, InventoryController.addInventory); 
+
+router.get('/getinventory/product/:productId', verifyAccessToken, InventoryController.getInventoryByProduct); 
+
+router.get('/getinventory/store/:storeId', verifyAccessToken, InventoryController.getInventoryByStore); 
+
+router.put('/getinventory/:id', verifyAccessToken, InventoryController.updateInventory);
+
+router.delete('/getinventory/:id', verifyAccessToken, InventoryController.deleteInventory);
 
 module.exports = router;

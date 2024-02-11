@@ -10,6 +10,7 @@ const AuthenticationController = require('../controllers/AuthenticationControlle
 router.get('/', verifyAccessToken, UserController.getUserById);
 router.delete('/:id', verifyAccessToken, UserController.deleteUser);
 router.get('/users', UserController.getAllUsers); 
+router.get('/vendorbyid', verifyAccessToken,UserController.getVendorByUserId); 
 
 // Authentication routes
 router.post('/signup', AuthenticationController.signup);
