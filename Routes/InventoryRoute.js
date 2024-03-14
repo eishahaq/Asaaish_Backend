@@ -7,7 +7,15 @@ const { verifyAccessToken } = require('../Helpers/JwtHelper');
 
 router.post('/createinventory', verifyAccessToken, InventoryController.addInventory); 
 
+router.get('/allinventory', verifyAccessToken, InventoryController.getAllInventory);
+
 router.get('/getinventory/product/:productId', verifyAccessToken, InventoryController.getInventoryByProduct); 
+
+router.get('/getinventory/productsByStore/:storeId', InventoryController.getProductsByStore);
+
+router.get('/getinventory/getInventoryByStoreAndProduct/:storeId/:productId', InventoryController.getInventoryByStoreAndProduct);
+
+//router.get('/getinventory/inventorybyStoreAndBrand/:storeId', InventoryController.getInventoryByStoreAndBrand);
 
 router.get('/getinventory/store/:storeId', verifyAccessToken, InventoryController.getInventoryByStore); 
 
@@ -15,4 +23,4 @@ router.put('/getinventory/:id', verifyAccessToken, InventoryController.updateInv
 
 router.delete('/getinventory/:id', verifyAccessToken, InventoryController.deleteInventory);
 
-module.exports = router;
+module.exports = router;    
