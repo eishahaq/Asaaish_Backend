@@ -13,6 +13,8 @@ router.get('/vendor', verifyAccessToken, StoreController.getVendorStores);
 
 router.get('/brand', verifyAccessToken, StoreController.getBrandStores);
 
+router.get('/getstoresbybrand/:brandId', verifyAccessToken, StoreController.getStoresByBrand);
+
 router.put('/:id', verifyAccessToken, StoreController.updateStore);
 
 router.delete('/:id', verifyAccessToken, StoreController.deleteStore);

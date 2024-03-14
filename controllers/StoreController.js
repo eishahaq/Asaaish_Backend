@@ -18,9 +18,13 @@ const StoreController = {
             if (user.role === 'Customer') {
                 throw createError.Forbidden("Only admins and vendors can create stores");
             }
+            console.log(user);
+            const vendor = Vendor.findOne({ user: user._id });
+            console.log(vendor);
     
             const { location, address, contactInfo, name, brand } = req.body;
-    
+            
+            
             const store = new Store({
                 brand,
                 name,
@@ -66,11 +70,11 @@ const StoreController = {
         try {
             const userId = req.payload.aud;
             const user = await User.findById(userId);
-
+            //console.log(user);
             if (user.role === 'Customer') {
                 throw createError.Forbidden("Only admins and vendors can access this");
             }
-
+        
             const vendorStores = await Vendor.findOne({ user: user._id }).populate('stores');
 
             if (!vendorStores) {
@@ -93,8 +97,10 @@ const StoreController = {
             }
 
             const brandStores = await Store.find({ store: Store.brand }).populate('brand');
+            console.log(brandStores.length)
 
             if (!brandStores) {
+                console.log("nobrandstores")
                 throw createError.NotFound('Brand or stores not found');
             }
 
@@ -103,6 +109,29 @@ const StoreController = {
             next(error);
         }
     },
+    async getStoresByBrand(req, res, next) {
+        try {
+            const brandId = req.params.brandId;
+            console.log("storebybrand: " + brandId);
+            
+                console.log("im vendor");
+                const storesdata = await Store.find({brand: brandId}).populate('brand');
+                console.log("number of stores: " + storesdata.length);
+    
+                if (storesdata.length === 0) {
+                    console.log("zero stores")
+                    return res.status(404).json({ message: 'No products found for the specified brand' });
+                }
+    
+                // This will only execute if storesdata.length > 0
+                return res.status(200).json(storesdata);
+           
+        } catch (error) {
+            next(error);
+        }
+    },
+    
+    
 
     async updateStore(req, res, next) {
         try {
