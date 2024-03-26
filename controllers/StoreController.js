@@ -50,8 +50,8 @@ const StoreController = {
             next(error);
         }    
     },
-    
 
+    // Fetch all stores
     async getAllStores(req, res, next) {
         try {
             const userId = req.payload.aud;
@@ -156,6 +156,10 @@ const StoreController = {
             const user = await User.findById(userId);
 
             if (user.role === 'Customer') {
+                throw createError.Forbidden("Only admins and vendors can delete stores");
+            }
+
+            if (req.payload.role !== 'Admin' && req.payload.role !== 'Vendor') {
                 throw createError.Forbidden("Only admins and vendors can delete stores");
             }
 

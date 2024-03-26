@@ -38,6 +38,7 @@ const BrandController = {
     },
 
     // Get a single brand by ID
+    // Get a single brand by ID
     async getBrandById(req, res, next) {
         try {
             const brandId = req.params.id;

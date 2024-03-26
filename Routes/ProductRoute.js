@@ -7,11 +7,11 @@ const { verifyAccessToken } = require('../Helpers/JwtHelper');
 
 router.post('/createproducts', verifyAccessToken, ProductController.createProduct); 
 
-router.get('/getproducts', verifyAccessToken, ProductController.getAllProducts); 
+router.get('/getproducts', ProductController.getAllProducts); 
 
-router.get('/getproducts/:id', verifyAccessToken, ProductController.getProductById); 
+router.get('/getproducts/:id', ProductController.getProductById); 
 
-router.get('/getproductsbybrand/:brandId', verifyAccessToken, ProductController.getProductsByBrand); 
+router.get('/getproductsbybrand/:brandId', ProductController.getProductsByBrand); 
 
 router.put('/updateproducts/:id', verifyAccessToken, ProductController.updateProduct); 
 

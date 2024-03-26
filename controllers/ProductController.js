@@ -1,24 +1,33 @@
-const Product = require('../Models/Product'); 
-const createError = require('http-errors');
+const Product = require('../Models/Product');
+const Category = require('../Models/Category');
 const User = require('../Models/User');
+const createError = require('http-errors');
 
 const ProductController = {
-
     async createProduct(req, res, next) {
         try {
-            const userId = req.payload.aud;
+            const userId = req.payload.aud; // Assuming your authentication middleware sets this
             const user = await User.findById(userId);
-    
-            if (user.role === 'Customer') {
-                throw createError.Forbidden("Only admins and vendors can create the products");
+
+            if (!['Admin', 'Vendor'].includes(user.role)) {
+                return next(createError.Forbidden("Only admins and vendors can create products"));
             }
 
-            const { brandId, name, description, category, price, images, offers } = req.body;
+            const { brandId, name, description, categories, price, images, offers } = req.body;
+
+            // Validate categories
+            for (let categoryId of categories) {
+                const categoryExists = await Category.findById(categoryId);
+                if (!categoryExists) {
+                    return next(createError.BadRequest(`Category with ID ${categoryId} does not exist`));
+                }
+            }
+
             const product = new Product({
                 brandId,
                 name,
                 description,
-                category,
+                categories,
                 price,
                 images,
                 offers
@@ -26,86 +35,71 @@ const ProductController = {
             await product.save();
             res.status(201).json(product);
         } catch (error) {
-            res.send({
-                error: {
-                    status: error.status || 500,
-                    message: error.message,
-                },
-            });
-            console.log(error.message);
-            next(error);
+            next(createError.InternalServerError(error.message));
         }
     },
 
-    // Fetch all products
     async getAllProducts(req, res, next) {
         try {
-            const products = await Product.find().populate('brandId');
+            const products = await Product.find().populate('brandId').populate('categories');
             res.status(200).json(products);
         } catch (error) {
-            next(error);
+            next(createError.InternalServerError(error.message));
         }
     },
 
-    // Fetch a single product by ID
     async getProductById(req, res, next) {
         try {
-            const product = await Product.findById(req.params.id).populate('brandId');
-            if (!product) throw createError.NotFound('Product not found');
+            const product = await Product.findById(req.params.id).populate('brandId').populate('categories');
+            if (!product) return next(createError.NotFound('Product not found'));
             res.status(200).json(product);
         } catch (error) {
-            next(error);
+            next(createError.InternalServerError(error.message));
         }
     },
 
     async getProductsByBrand(req, res, next) {
         try {
-            const brandId = req.params.brandId; // Assuming the brandId is passed as a URL parameter
-            console.log("prodbybrand" +brandId);
-            const products = await Product.find({ brandId: brandId }).populate('brandId');
-            console.log(products.length);
-            if (products.length === 0) {
-                console.log("zero products")
-                throw createError.NotFound('No products found for the specified brand');
-            
-            }
-            
+            const { brandId } = req.params;
+            const products = await Product.find({ brandId }).populate('brandId').populate('categories');
+            if (!products.length) return res.status(200).json([]);
             res.status(200).json(products);
         } catch (error) {
-            next(error);
+            next(createError.InternalServerError(error.message));
         }
     },
-    // Update a product
+
     async updateProduct(req, res, next) {
         try {
             const userId = req.payload.aud;
             const user = await User.findById(userId);
-    
+
             if (user.role === 'Customer') {
-                throw createError.Forbidden("Only admins and vendors can update the products");
+                return next(createError.Forbidden("Only admins and vendors can update products"));
             }
-            const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-            if (!updatedProduct) throw createError.NotFound('Product not found');
+
+            const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('categories');
+            if (!updatedProduct) return next(createError.NotFound('Product not found'));
             res.status(200).json(updatedProduct);
         } catch (error) {
-            next(error);
+            next(createError.InternalServerError(error.message));
         }
     },
 
-    // Delete a product
     async deleteProduct(req, res, next) {
         try {
             const userId = req.payload.aud;
             const user = await User.findById(userId);
-    
+
             if (user.role === 'Customer') {
-                throw createError.Forbidden("Only admins and vendors can delete the products");
+                return next(createError.Forbidden("Only admins and vendors can delete products"));
             }
+
             const deletedProduct = await Product.findByIdAndDelete(req.params.id);
-            if (!deletedProduct) throw createError.NotFound('Product not found');
+            if (!deletedProduct) return next(createError.NotFound('Product not found'));
             res.status(200).json({ message: 'Product successfully deleted' });
         } catch (error) {
-            next(error);
+            next(createError.InternalServerError(error.message));
         }
     }
 };

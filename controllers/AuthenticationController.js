@@ -9,6 +9,7 @@ const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('../He
 const AuthenticationController = {
     async signup(req, res, next) {
         try {
+            console.log(req.body);
             const result = await authorizationSchema.validateAsync(req.body);
             const doesExist = await User.findOne({ email: result.email });
             if (doesExist) throw createError.Conflict(`${result.email} has already been registered`);
@@ -25,29 +26,41 @@ const AuthenticationController = {
                 email: result.email
             });
 
+            if (result.role === 'Vendor' && req.payload.role !== 'Admin') {
+                throw createError.Forbidden("Only admins can create vendor accounts");
+            }
+
             const savedUser = await user.save();
             console.log('User created:', savedUser);
 
-            // Additional logic for Customer or Vendor
             if (result.role === 'Customer') {
                 console.log('Creating customer...');
+                // Extract location and address from the request, if available
+                const locationCoordinates = result.locationCoordinates || []; // Ensure default value or validation
+                const userAddress = result.address || ''; // Ensure default value or validation
+    
                 const customer = new Customer({
-                  user: savedUser._id
+                    user: savedUser._id,
+                    location: {
+                        type: 'Point',
+                        coordinates: locationCoordinates
+                    },
+                    address: userAddress
                 });
-          
+    
                 const savedCustomer = await customer.save();
                 console.log('Customer created:', savedCustomer);
-            } else if (result.role === 'Vendor') {
+                
+            }  else if (result.role === 'Vendor' && req.payload.role === 'Admin') {
                 console.log('Creating vendor...');
                 const vendor = new Vendor({
                     user: savedUser._id,
                     brand: result.brand, // Adjust to match the actual request field
                     stores: result.stores, // This should be an array of store ObjectId's
-                  });
-            
-          
-                await vendor.save();
-                console.log('Vendor created:', vendor);
+                });
+
+                const savedVendor = await vendor.save();
+                console.log('Vendor created:', savedVendor);
             }
 
             const accessToken = await signAccessToken(savedUser.id);
