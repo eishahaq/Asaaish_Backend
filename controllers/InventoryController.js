@@ -4,6 +4,7 @@ const User = require('../Models/User');
 const Product = require('../Models/Product');
 const createError = require('http-errors');
 const Vendor = require('../Models/Vendor');
+const mongoose = require('mongoose');
 
 const InventoryController = {
     // Add new inventory
@@ -56,6 +57,7 @@ const InventoryController = {
             const inventory = await Inventory.find({ productId: req.params.productId }).populate('storeId').populate('productId');
             if (!inventory) throw createError.NotFound('Inventory not found for given product');
             res.status(200).json(inventory);
+            console.log(inventory);
         } catch (error) {
             next(error);
         }
@@ -158,7 +160,36 @@ async getProductsByStore(req, res, next) {
         } catch (error) {
             next(error);
         }
-    }
+    },
+
+    async getProductVariants(req, res, next) {
+        const { productId } = req.params;
+
+  try {
+    const inventoryItems = await Inventory.find({ productId: productId });
+    
+    let variants = {};
+    
+    inventoryItems.forEach((item) => {
+      item.variants.forEach((variant) => {
+        if (!variants[variant.color]) {
+          variants[variant.color] = new Set();
+        }
+        variants[variant.color].add(variant.size);
+      });
+    });
+    
+    // Convert sets to arrays for JSON serialization
+    Object.keys(variants).forEach(color => {
+      variants[color] = Array.from(variants[color]);
+    });
+    
+    res.json(variants);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server Error');
+  }
+},
 };
 
 module.exports = InventoryController;

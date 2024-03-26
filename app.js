@@ -30,14 +30,14 @@ mongoose.connection.on('error',err => {
 mongoose.connection.on('connected',connected=>{
     console.log('Connected with database sucessfully'); 
 })
-
-app.use(bodyParser.urlencoded({extended:false}));
-app.use(bodyParser.json()); 
-
 app.use(cors({
     origin: true,
     credentials: true
   }));
+app.use(bodyParser.urlencoded({extended:false}));
+app.use(bodyParser.json()); 
+
+
 
 
 app.use('/User', User);
