@@ -1,5 +1,18 @@
 const Product = require('../Models/Product'); 
+const Product = require('../Models/Category'); 
 const createError = require('http-errors');
+
+
+const findOrCreateCategory = async (name, parentCategory = null) => {
+    // Ensure category name is in lowercase
+    const categoryName = name.toLowerCase();
+    let category = await Category.findOne({ name: categoryName, parentCategory });
+    if (!category) {
+        category = new Category({ name: categoryName, parentCategory });
+        await category.save();
+    }
+    return category._id;
+};
 
 const ProductController = {
     // Create a new product
