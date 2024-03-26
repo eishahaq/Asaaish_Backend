@@ -9,11 +9,13 @@ router.post('/createinventory', verifyAccessToken, InventoryController.addInvent
 
 router.get('/allinventory', verifyAccessToken, InventoryController.getAllInventory);
 
-router.get('/getinventory/product/:productId', verifyAccessToken, InventoryController.getInventoryByProduct); 
+router.get('/getinventory/product/:productId', InventoryController.getInventoryByProduct); 
 
 router.get('/getinventory/productsByStore/:storeId', InventoryController.getProductsByStore);
 
 router.get('/getinventory/getInventoryByStoreAndProduct/:storeId/:productId', InventoryController.getInventoryByStoreAndProduct);
+
+router.get('/getproductvariants/:productId', InventoryController.getProductVariants);
 
 //router.get('/getinventory/inventorybyStoreAndBrand/:storeId', InventoryController.getInventoryByStoreAndBrand);
 
