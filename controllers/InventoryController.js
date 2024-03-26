@@ -1,4 +1,4 @@
-const Inventory = require('../Models/Inventory'); // Adjust the path as necessary
+const Inventory = require('../Models/Inventory'); 
 const createError = require('http-errors');
 
 const InventoryController = {

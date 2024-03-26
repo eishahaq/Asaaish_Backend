@@ -9,6 +9,8 @@ const authorizationSchema =Joi.object({
     password: Joi.string(),
     brand_name: Joi.string(),
     branch_code: Joi.string(),
+    location: Joi.array().items(Joi.number()),
+    address: Joi.string()
 })
 
 module.exports = {

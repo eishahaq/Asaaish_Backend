@@ -8,11 +8,14 @@ const { verifyAccessToken } = require('./Helpers/JwtHelper')
 const bcrypt = require('bcrypt')
 const cors = require('cors');
 const User = require("./Routes/UserRoute");
-// const Customer = require("./Routes/CustomerRoute");
+
 const Brand = require("./Routes/BrandRoute");
 const Store = require("./Routes/StoreRoute");
 const Product = require("./Routes/ProductRoute");
 const Inventory = require("./Routes/InventoryRoute");
+const Cart = require('./Routes/CartRoute');
+const Order = require('./Routes/OrderRoute');
+
 const app = express()
 
 
@@ -42,16 +45,8 @@ app.use('/Brand', Brand);
 app.use('/Store', Store);
 app.use('/Product', Product);
 app.use('/Inventory', Inventory);
-// app.use('/Vendor', Vendor);
-// app.use('/Customer',Customer);
-
-// In your backend server response handler
-// app.use((req,res) => {
-// res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-// res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-// res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-// res.setHeader('Access-Control-Allow-Credentials', 'true');
-// })
+app.use('/Cart', Cart);
+app.use('/Order',Order);
 
 
 app.get('/', verifyAccessToken, async (req, res, next) => {

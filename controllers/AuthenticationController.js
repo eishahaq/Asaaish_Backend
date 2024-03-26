@@ -34,13 +34,23 @@ const AuthenticationController = {
 
             if (result.role === 'Customer') {
                 console.log('Creating customer...');
+                // Extract location and address from the request, if available
+                const locationCoordinates = result.locationCoordinates || []; // Ensure default value or validation
+                const userAddress = result.address || ''; // Ensure default value or validation
+    
                 const customer = new Customer({
-                    user: savedUser._id
+                    user: savedUser._id,
+                    location: {
+                        type: 'Point',
+                        coordinates: locationCoordinates
+                    },
+                    address: userAddress
                 });
-
+    
                 const savedCustomer = await customer.save();
                 console.log('Customer created:', savedCustomer);
-            } else if (result.role === 'Vendor' && req.payload.role === 'Admin') {
+                
+            }  else if (result.role === 'Vendor' && req.payload.role === 'Admin') {
                 console.log('Creating vendor...');
                 const vendor = new Vendor({
                     user: savedUser._id,

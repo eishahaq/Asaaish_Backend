@@ -1,10 +1,14 @@
-const Product = require('../Models/Product'); // Adjust the path as necessary
+const Product = require('../Models/Product'); 
 const createError = require('http-errors');
 
 const ProductController = {
     // Create a new product
     async createProduct(req, res, next) {
         try {
+            if (req.payload.role !== 'Admin' && req.payload.role !== 'Vendor') {
+                throw createError.Forbidden("Only admins and vendors can create products");
+            }
+
             const { brandId, name, description, category, price, images, offers } = req.body;
             const product = new Product({
                 brandId,
@@ -46,6 +50,10 @@ const ProductController = {
     // Update a product
     async updateProduct(req, res, next) {
         try {
+            if (req.payload.role !== 'Admin' && req.payload.role !== 'Vendor') {
+                throw createError.Forbidden("Only admins and vendors can update products");
+            }
+
             const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
             if (!updatedProduct) throw createError.NotFound('Product not found');
             res.status(200).json(updatedProduct);
@@ -57,6 +65,10 @@ const ProductController = {
     // Delete a product
     async deleteProduct(req, res, next) {
         try {
+            if (req.payload.role !== 'Admin' && req.payload.role !== 'Vendor') {
+                throw createError.Forbidden("Only admins and vendors can delete products");
+            }
+
             const deletedProduct = await Product.findByIdAndDelete(req.params.id);
             if (!deletedProduct) throw createError.NotFound('Product not found');
             res.status(200).json({ message: 'Product successfully deleted' });
