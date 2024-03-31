@@ -5,13 +5,10 @@ const { signAccessToken, signRefreshToken, verifyRefreshToken, verifyAccessToken
 
 const router = express.Router();
 
-// Route to create a new order
-router.post('/create',verifyAccessToken, OrderController.createOrder);
-
-// Route to get all orders
-router.get('/all', OrderController.getAllOrders);
-
-// Route to get all orders by a specific store
-router.get('/store/:storeId', OrderController.getOrdersByStore);
+router.post('/checkout', verifyAccessToken, OrderController.checkout);
+router.get('/', verifyAccessToken, OrderController.getUserOrders);
+router.get('/:orderId', verifyAccessToken, OrderController.getOrderDetails);
+router.patch('/:orderId', verifyAccessToken, OrderController.updateOrder); // Consider PUT if you prefer replacing the entire order
+router.delete('/:orderId', verifyAccessToken, OrderController.deleteOrder);
 
 module.exports = router;
