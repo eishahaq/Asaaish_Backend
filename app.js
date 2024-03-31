@@ -15,6 +15,8 @@ const Product = require("./Routes/ProductRoute");
 const Inventory = require("./Routes/InventoryRoute");
 const Cart = require('./Routes/CartRoute');
 const Order = require('./Routes/OrderRoute');
+const Tag = require('./Routes/TagRoute');
+const Category = require('./Routes/CategoryRoute');
 
 const app = express()
 
@@ -47,6 +49,8 @@ app.use('/Product', Product);
 app.use('/Inventory', Inventory);
 app.use('/Cart', Cart);
 app.use('/Order',Order);
+app.use('/Tag', Tag);
+app.use('/Category', Category);
 
 
 app.get('/', verifyAccessToken, async (req, res, next) => {

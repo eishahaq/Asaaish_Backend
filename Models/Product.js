@@ -15,10 +15,14 @@ const ProductSchema = new Schema({
     type: String,
     required: true
   },
-  categories: [{ // Changed to an array to reference multiple categories
+  category: { // Changed from 'categories' to 'category' for a single reference
     type: Schema.Types.ObjectId,
     ref: 'Category',
     required: true
+  },
+  tags: [{ // New field for referencing multiple Tags
+    type: Schema.Types.ObjectId,
+    ref: 'Tag'
   }],
   price: {
     type: Number,

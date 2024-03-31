@@ -1,3 +1,5 @@
+// File: models/Category.js
+
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
@@ -7,11 +9,11 @@ const CategorySchema = new Schema({
     required: true,
     unique: true // Ensures category names are unique
   },
-  parentCategory: {
-    type: Schema.Types.ObjectId,
-    ref: 'Category',
-    default: null // This indicates a top-level category if null
-  }
+  description: {
+    type: String,
+    required: false,
+  },
+
 });
 
 const Category = mongoose.model('Category', CategorySchema);
