@@ -190,6 +190,92 @@ async getProductsByStore(req, res, next) {
     res.status(500).send('Server Error');
   }
 },
+
+async getAllInventoryLocations(req, res, next) {
+    try {
+        const inventoryList = await Inventory.find().populate('storeId');
+        const locations = inventoryList.map(inventory => {
+            // Assuming the 'Store' model includes a 'location' field
+            return {
+                inventoryId: inventory._id,
+                productId: inventory.productId,
+                storeId: inventory.storeId._id,
+                location: inventory.storeId.location
+            };
+        });
+        res.status(200).json(locations);
+    } catch (error) {
+        next(createError.InternalServerError('Failed to fetch inventory locations'));
+    }
+},
+
+async getStoreLocationByInventoryId(req, res, next) {
+    try {
+        const { inventoryId } = req.params; // Get inventoryId from URL parameters
+        const inventoryItem = await Inventory.findById(inventoryId)
+            .populate({
+                path: 'storeId', // Assuming the Inventory schema has a 'storeId' field
+                select: 'location' // Only fetch the location field from the Store document
+            });
+
+        if (!inventoryItem) {
+            return res.status(404).json({ message: 'Inventory not found' });
+        }
+
+        if (!inventoryItem.storeId) {
+            return res.status(404).json({ message: 'Store associated with this inventory not found' });
+        }
+
+        res.status(200).json({
+            inventoryId: inventoryItem._id,
+            storeId: inventoryItem.storeId._id,
+            location: inventoryItem.storeId.location
+        });
+    } catch (error) {
+        console.error(error);
+        next(createError.InternalServerError('Failed to fetch store location for the given inventory'));
+    }
+},
+
+async getAllStoreLocationsForProduct(req, res, next) {
+    try {
+        const { productId } = req.params;
+        // Find inventories by product ID and populate both storeId and productId details
+        const inventories = await Inventory.find({ productId: productId })
+                                .populate('storeId')
+                                .populate('productId');
+
+        if (!inventories.length) {
+            return res.status(404).json({ message: 'No inventories found for the given product ID' });
+        }
+
+        const locations = inventories.map(inventory => {
+            if (inventory.storeId && inventory.storeId.location) {
+                return {
+                    storeId: inventory.storeId._id,
+                    location: inventory.storeId.location,
+                    name: inventory.storeId.name, // Assuming the 'name' field in your Store model
+                    address: inventory.storeId.address, // Assuming the 'address' field
+                    // Include variant information
+                    variants: inventory.variants.map(variant => ({
+                        color: variant.color,
+                        size: variant.size,
+                        quantity: variant.quantity
+                    }))
+                };
+            }
+        }).filter(location => location !== undefined); // Filter out any undefined values
+
+        res.json(locations);
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+}
+
+
 };
+
+
 
 module.exports = InventoryController;
