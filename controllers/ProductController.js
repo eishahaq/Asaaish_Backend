@@ -111,6 +111,8 @@ const Category = require('../Models/Category'); // Corrected require statement
 const Tag = require('../Models/Tag'); // Add Tag model
 const User = require('../Models/User');
 const createError = require('http-errors');
+const Vendor = require('../Models/Vendor');
+const user = require('../Models/User');
 
 const ProductController = {
     async createProduct(req, res, next) {
@@ -159,6 +161,30 @@ const ProductController = {
     async getAllProducts(req, res, next) {
         try {
             const products = await Product.find().populate('brandId').populate('category').populate('tags');
+            res.status(200).json(products);
+        } catch (error) {
+            next(createError.InternalServerError(error.message));
+        }
+    },
+    
+    
+    async getProductsByVendor(req, res, next) {
+        try {
+            const userId = req.payload.aud; // Vendor identification
+
+            if (user.role === 'Customer') {
+                throw createError.Forbidden("Only admins and vendors can access this");
+            }            
+            const vendor = await Vendor.findOne({user: user._id});
+            const brandIdd = await Vendor.findOne({user: user._id}).populate('brand'); // Fetch brand IDs for this vendor
+            console.log(brandIdd);
+            console.log("vendor: " + vendor);
+            if (!brandIdd) {
+                
+                return next(createError.NotFound('No brand found for this vendor'));
+            }
+    
+            const products = await Product.find({ brandId: brandIdd.brand._id }).populate('brandId');
             res.status(200).json(products);
         } catch (error) {
             next(createError.InternalServerError(error.message));
