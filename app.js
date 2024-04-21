@@ -17,6 +17,8 @@ const Order = require('./Routes/OrderRoute');
 const Tag = require('./Routes/TagRoute');
 const Category = require('./Routes/CategoryRoute');
 const Collection = require('./Routes/CollectionRoute');
+const Reservation = require('./Routes/ReservationRoute');
+
 
 const app = express()
 
@@ -52,6 +54,8 @@ app.use('/Order',Order);
 app.use('/Tag', Tag);
 app.use('/Category', Category);
 app.use('/Collection', Collection);
+app.use('/Reservation', Reservation);
+
 
 
 app.get('/', verifyAccessToken, async (req, res, next) => {
