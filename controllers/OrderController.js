@@ -47,6 +47,7 @@ const OrderController = {
             next(error);
         }
     },
+    
     async getUserOrders(req, res, next) {
         try {
             const userId = req.payload.aud;

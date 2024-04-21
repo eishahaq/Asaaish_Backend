@@ -8,7 +8,6 @@ const { verifyAccessToken } = require('./Helpers/JwtHelper')
 const bcrypt = require('bcrypt')
 const cors = require('cors');
 const User = require("./Routes/UserRoute");
-
 const Brand = require("./Routes/BrandRoute");
 const Store = require("./Routes/StoreRoute");
 const Product = require("./Routes/ProductRoute");
