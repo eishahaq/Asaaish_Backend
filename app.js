@@ -16,6 +16,7 @@ const Cart = require('./Routes/CartRoute');
 const Order = require('./Routes/OrderRoute');
 const Tag = require('./Routes/TagRoute');
 const Category = require('./Routes/CategoryRoute');
+const Collection = require('./Routes/CollectionRoute');
 
 const app = express()
 
@@ -50,6 +51,7 @@ app.use('/Cart', Cart);
 app.use('/Order',Order);
 app.use('/Tag', Tag);
 app.use('/Category', Category);
+app.use('/Collection', Collection);
 
 
 app.get('/', verifyAccessToken, async (req, res, next) => {
