@@ -26,9 +26,9 @@ const AuthenticationController = {
                 email: result.email
             });
 
-            if (result.role === 'Vendor' && req.payload.role !== 'Admin') {
-                throw createError.Forbidden("Only admins can create vendor accounts");
-            }
+            // if (result.role === 'Vendor' && req.payload.role !== 'Admin') {
+            //     throw createError.Forbidden("Only admins can create vendor accounts");
+            // }
 
             const savedUser = await user.save();
             console.log('User created:', savedUser);
@@ -51,7 +51,7 @@ const AuthenticationController = {
                 const savedCustomer = await customer.save();
                 console.log('Customer created:', savedCustomer);
                 
-            }  else if (result.role === 'Vendor' && req.payload.role === 'Admin') {
+            }  else if (result.role === 'Vendor') {
                 console.log('Creating vendor...');
                 const vendor = new Vendor({
                     user: savedUser._id,

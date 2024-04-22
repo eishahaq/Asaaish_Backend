@@ -20,6 +20,7 @@ const Category = require('./Routes/CategoryRoute');
 const Collection = require('./Routes/CollectionRoute');
 
 const app = express()
+app.use(express.json()); // This should be near the top, before your route handlers.
 
 
 mongoose.set("strictQuery", false);

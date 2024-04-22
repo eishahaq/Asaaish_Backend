@@ -18,7 +18,7 @@ const OrderSchema = new Schema({
   items: [OrderItemSchema],
   total: { type: Number, required: true },
   paymentMethod: { type: String, required: true },
-  shippingDetails: {
+  shippingDetails: {  
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     phone: { type: String, required: true },
