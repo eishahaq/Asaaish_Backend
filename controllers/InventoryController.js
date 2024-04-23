@@ -18,6 +18,7 @@ const InventoryController = {
                 offers
             });
             await inventory.save();
+            console.log("Inventory Created Successfully")
             res.status(201).json(inventory);
         } catch (error) {
             next(error);
@@ -254,9 +255,8 @@ async getAllStoreLocationsForProduct(req, res, next) {
                 return {
                     storeId: inventory.storeId._id,
                     location: inventory.storeId.location,
-                    name: inventory.storeId.name, // Assuming the 'name' field in your Store model
-                    address: inventory.storeId.address, // Assuming the 'address' field
-                    // Include variant information
+                    name: inventory.storeId.name, 
+                    address: inventory.storeId.address, 
                     variants: inventory.variants.map(variant => ({
                         color: variant.color,
                         size: variant.size,

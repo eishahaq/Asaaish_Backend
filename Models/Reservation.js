@@ -1,34 +1,38 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const ReservationSchema = new Schema({
+const ReservationItemSchema = new Schema({
     productId: {
         type: Schema.Types.ObjectId,
         ref: 'Product',
         required: true
     },
-    storeId: {
+    inventoryId: {
         type: Schema.Types.ObjectId,
-        ref: 'Store',
+        ref: 'Inventory',
         required: true
     },
+    variant: {
+        color: String,
+        size: String,
+    },
+    reservedAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+const ReservationSchema = new Schema({
     userId: {
         type: Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    reservedAt: {
-        type: Date,
-        default: Date.now
-    },
+    items: [ReservationItemSchema],
     expiresAt: {
         type: Date,
-        default: () => new Date(+new Date() + 24*60*60*1000) // 24 hours from now
-    },
-    status: {
-        type: String,
-        enum: ['reserved', 'purchased', 'cancelled'],
-        default: 'reserved'
+        default: () => new Date(+new Date() + 24*60*60*1000),
+        index: { expires: '24h' }
     }
 });
 
