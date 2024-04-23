@@ -18,6 +18,7 @@ const InventoryController = {
                 offers
             });
             await inventory.save();
+            console.log("Inventory Created Successfully")
             res.status(201).json(inventory);
         } catch (error) {
             next(error);
