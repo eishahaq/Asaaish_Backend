@@ -51,11 +51,11 @@ const AuthenticationController = {
                 const savedCustomer = await customer.save();
                 console.log('Customer created:', savedCustomer);
                 
-            }  else if (result.role === 'Vendor' && req.payload.role === 'Admin') {
+            }  else if (result.role === 'Vendor') {
                 console.log('Creating vendor...');
                 const vendor = new Vendor({
                     user: savedUser._id,
-                    brand: result.brand, // Adjust to match the actual request field
+                    brand: result.brandId, // Adjust to match the actual request field
                     stores: result.stores, // This should be an array of store ObjectId's
                 });
 

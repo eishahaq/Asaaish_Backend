@@ -105,18 +105,41 @@ const UserController = {
 
     async getVendorByUserId(req, res, next) {
         try {
-          const userId = req.payload.aud; // Assuming the user ID is stored in the JWT token's audience (aud) field
-          console.log('User ID:', userId);
-          const vendor = await Vendor.findOne({ user: userId }).populate('user').populate('brand').populate('stores');
-
-          if (!vendor) {
-            throw createError.NotFound('Vendor not found');
-          }
-          res.status(200).json(vendor);
+            // Log when the function starts execution
+            console.log('getVendorByUserId function started');
+    
+            const userId = req.payload.aud; // Assuming the user ID is stored in the JWT token's audience (aud) field
+            console.log('User ID:', userId); // Existing log
+    
+            // Log before making a database call
+            console.log('Fetching vendor for user ID:', userId);
+    
+            const vendor = await Vendor.findOne({ user: userId })
+              .populate('user')
+              .populate('brand')
+              .populate('stores');
+    
+            // Log after receiving the response from the database
+            console.log('Vendor fetch successful for user ID:', userId);
+    
+            if (!vendor) {
+                console.log('Vendor not found for user ID:', userId); // Log when the vendor is not found
+                throw createError.NotFound('Vendor not found');
+            }
+    
+            // Log the vendor details (if not confidential)
+            console.log('Vendor details:', vendor);
+    
+            res.status(200).json(vendor);
+    
+            // Log successful end of the function
+            console.log('getVendorByUserId function completed successfully');
         } catch (error) {
-          next(error);
+            // Log the error before passing it to the next middleware
+            console.error('Error in getVendorByUserId function:', error);
+            next(error);
         }
-      },
+    },
     
       // Update vendor details
       async updateVendor(req, res, next) {
