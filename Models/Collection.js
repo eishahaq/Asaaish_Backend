@@ -18,10 +18,9 @@ const CollectionSchema = new Schema({
     ref: 'Product',
     required: true
   }],
-  imageUrl: {
-    type: String,
-    required: true
-  }
+  images: [
+    String
+  ]
 }, { timestamps: true });
 
 const Collection = mongoose.model('Collection', CollectionSchema);

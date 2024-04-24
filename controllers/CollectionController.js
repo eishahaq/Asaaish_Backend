@@ -4,8 +4,8 @@ const createError = require('http-errors');
 const CollectionController = {
     async createCollection(req, res, next) {
         try {
-            const { name, description, brand, products, imageUrl } = req.body;
-            const collection = new Collection({ name, description, brand, products, imageUrl });
+            const { name, description, brand, products, images } = req.body;
+            const collection = new Collection({ name, description, brand, products, images });
             const savedCollection = await collection.save();
             res.status(201).json(savedCollection);
         } catch (error) {
