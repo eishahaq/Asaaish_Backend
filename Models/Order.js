@@ -1,4 +1,3 @@
-// File: models/Order.js
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
@@ -19,13 +18,13 @@ const OrderSchema = new Schema({
   total: { type: Number, required: true },
   paymentMethod: { type: String, required: true },
   shippingDetails: {
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
-    phone: { type: String, required: true },
-    address: { type: String, required: true },
-    city: { type: String, required: true },
-    country: { type: String, required: true },
-    zipCode: { type: String, required: true }
+    firstName: String,
+    lastName: String,
+    phone: String,
+    address: String,
+    city: String,
+    country: String,
+    zipCode: String
   },
   deliveryLocation: {
     type: { type: String, enum: ['Point'], default: 'Point' },
