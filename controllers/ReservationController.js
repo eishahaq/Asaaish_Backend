@@ -40,23 +40,20 @@ const ReservationController = {
         const reservationId = req.params.id;
     
         try {
-            // Fetch the reservation first to ensure it belongs to the user
-            const reservation = await Reservation.findOne({
+            // Ensure the reservation belongs to the user and update
+            const updatedReservation = await Reservation.findOneAndUpdate({
                 _id: reservationId,
-                userId: userId // Ensure the reservation belongs to the user
+                userId: userId, // Ensure the reservation belongs to the user
+                'items.status': 'Active' // Only target active reservations
+            }, {
+                $set: { 'items.$[elem].status': 'Cancelled by User' }
+            }, {
+                arrayFilters: [{ 'elem.status': 'Active' }], // Target only elements that are active
+                new: true
             });
     
-            if (!reservation) {
-                return res.status(404).json({ message: "Reservation not found or not yours to cancel." });
-            }
-    
-            // Update reservation status to 'Cancelled by User'
-            const updatedReservation = await Reservation.findByIdAndUpdate(reservationId, {
-                $set: { 'items.$.status': 'Cancelled by User' }
-            }, { new: true });
-    
             if (!updatedReservation) {
-                return res.status(404).json({ message: "Failed to update reservation." });
+                return res.status(404).json({ message: "Reservation not found or not eligible for cancellation." });
             }
     
             res.status(200).json({ message: 'Reservation cancelled by user successfully.', reservation: updatedReservation });
@@ -83,18 +80,41 @@ const ReservationController = {
             next(createError.InternalServerError());
         }
     },
-
+   
     async getUserReservations(req, res, next) {
         try {
-            const userId = req.payload.aud;
-            const reservations = await Reservation.find({ userId })
-                .populate('items.productId')
-                .populate('items.inventoryId');
+            const userId = req.payload.aud; // User ID from JWT payload
+            // Fetch only reservations with at least one item marked as 'Active'
+            const reservations = await Reservation.find({
+                userId,
+                'items.status': 'Active'
+            })
+            .populate('items.productId')
+            .populate('items.inventoryId');
+    
             res.status(200).json(reservations);
         } catch (error) {
+            console.error('Error fetching active reservations:', error);
             next(createError.InternalServerError(error));
         }
     },
+
+    async getAllUserReservations(req, res, next) {
+        try {
+            const userId = req.payload.aud; // User ID from JWT payload
+            // Fetch all reservations for the user
+            const reservations = await Reservation.find({ userId })
+                .populate('items.productId')
+                .populate('items.inventoryId');
+    
+            res.status(200).json(reservations);
+        } catch (error) {
+            console.error('Error fetching all user reservations:', error);
+            next(createError.InternalServerError(error));
+        }
+    },
+    
+    
 
     async getVendorReservations(req, res, next) {
         try {
@@ -107,6 +127,21 @@ const ReservationController = {
             next(createError.InternalServerError(error));
         }
     },
+
+    // async cancelReservation(req, res, next) {
+    //     try {
+    //         const reservationId = req.params.id;
+    //         const updatedReservation = await Reservation.findByIdAndUpdate(reservationId, {
+    //             $set: { 'items.$.status': 'Cancelled by User' }
+    //         }, { new: true });
+    //         if (!updatedReservation) {
+    //             return res.status(404).json({ message: "Reservation not found." });
+    //         }
+    //         res.status(200).json({ message: 'Reservation cancelled successfully.', reservation: updatedReservation });
+    //     } catch (error) {
+    //         next(createError.InternalServerError(error));
+    //     }
+    // },
 
     async deleteReservation(req, res, next) {
         try {
@@ -121,8 +156,7 @@ const ReservationController = {
         } catch (error) {
             next(createError.InternalServerError(error));
         }
-    }
-
+    },
 };
 
 module.exports = ReservationController;

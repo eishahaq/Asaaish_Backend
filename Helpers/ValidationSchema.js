@@ -1,4 +1,5 @@
 const Joi = require('@hapi/joi');
+const Joi = require('@hapi/joi');
 
 const authorizationSchema = Joi.object({
     role: Joi.string().valid('Customer', 'Vendor', 'Admin').required(),
