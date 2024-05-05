@@ -1,14 +1,11 @@
 const express = require('express');
-const OrderController = require('../controllers/OrderController'); 
-const { signAccessToken, signRefreshToken, verifyRefreshToken, verifyAccessToken } = require('../Helpers/JwtHelper')
-
-
 const router = express.Router();
+const OrderController = require('../controllers/OrderController');
+const { verifyAccessToken } = require('../Helpers/JwtHelper');
 
-router.post('/checkout', verifyAccessToken, OrderController.checkout);
-router.get('/', verifyAccessToken, OrderController.getUserOrders);
-router.get('/:orderId', verifyAccessToken, OrderController.getOrderDetails);
-router.patch('/:orderId', verifyAccessToken, OrderController.updateOrder); // Consider PUT if you prefer replacing the entire order
-router.delete('/:orderId', verifyAccessToken, OrderController.deleteOrder);
+router.post('/create', verifyAccessToken, OrderController.createOrder);
+router.get('/user', verifyAccessToken, OrderController.getUserOrders);
+router.patch('/update-status', verifyAccessToken, OrderController.updateOrderStatus);
+router.delete('/delete/:id', verifyAccessToken, OrderController.deleteOrder);
 
 module.exports = router;
