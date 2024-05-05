@@ -2,7 +2,7 @@
 const Cart = require('../Models/Cart');
 const Inventory = require('../Models/Inventory');
 const User = require('../Models/User');
-const Product = require('../Models/Product');
+const Product = require('../models/Product');
 const createError = require('http-errors');
 const mongoose = require('mongoose');
 
