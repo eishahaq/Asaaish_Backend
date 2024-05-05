@@ -1,4 +1,4 @@
-const Brand = require('../Models/Brand');
+const Brand = require('../models/Brand');
 const createError = require('http-errors');
 const User = require('../Models/User');
 
@@ -26,7 +26,6 @@ const BrandController = {
             next(error);
         }
     },
-
     // Get all brands
     async getAllBrands(req, res, next) {
         try {
