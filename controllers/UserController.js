@@ -155,6 +155,15 @@ const UserController = {
           next(error);
         }
       },
+
+      async getAllCustomers(req, res, next) {
+        try {
+            const customers = await User.find({ role: 'Customer' });
+            res.status(200).json(customers);
+        } catch (error) {
+            next(error);
+        }
+    }
     
 
 
