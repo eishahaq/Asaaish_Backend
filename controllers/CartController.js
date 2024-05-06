@@ -13,7 +13,7 @@ const CartController = {
             console.log(`userId: ${userId}`);
             const { productId, inventoryId, quantity, variant } = req.body;
             console.log(`product id ${productId} inventory id ${inventoryId} quantity ${quantity} variant ${variant}`);    
-        
+
             // Check inventory availability
             const inventoryItem = await Inventory.findById(inventoryId);
             console.log(`inventory item ${inventoryItem}`);
