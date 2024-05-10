@@ -1,6 +1,6 @@
 const User = require('../Models/User');
 const { verifyAccessToken } = require('../Helpers/JwtHelper');
-const Vendor = require('../Models/Vendor');
+const Vendor = require('../models/Vendor');
 const createError = require('http-errors');
 
 const UserController = {

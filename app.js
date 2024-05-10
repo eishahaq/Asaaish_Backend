@@ -21,6 +21,7 @@ const Reservation = require('./Routes/ReservationRoute');
 
 
 const app = express()
+app.use(express.json()); // This should be near the top, before your route handlers.
 
 
 mongoose.set("strictQuery", false);

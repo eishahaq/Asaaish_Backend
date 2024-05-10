@@ -43,19 +43,11 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const ReservationItemSchema = new Schema({
-    productId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Product',
-        required: true
-    },
-    inventoryId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Inventory',
-        required: true
-    },
+    productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+    inventoryId: { type: Schema.Types.ObjectId, ref: 'Inventory', required: true },
     variant: {
-        color: String,
-        size: String,
+        color: { type: String, required: true },
+        size: { type: String, required: true },
     },
     status: {
         type: String,
@@ -80,6 +72,7 @@ const ReservationSchema = new Schema({
         required: true
     },
     items: [ReservationItemSchema] // includes the modified ReservationItemSchema
+
 });
 
 const Reservation = mongoose.model('Reservation', ReservationSchema);
