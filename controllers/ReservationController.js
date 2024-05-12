@@ -1,5 +1,5 @@
 const Reservation = require('../Models/Reservation');
-const Product = require('../Models/Product');
+const Product = require('../models/Product');
 const Inventory = require('../Models/Inventory');
 const User = require('../Models/User');
 const createError = require('http-errors');

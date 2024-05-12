@@ -5,7 +5,7 @@ require('dotenv').config();
 const bodyParser = require('body-parser'); 
 const createError = require('http-errors')
 const { verifyAccessToken } = require('./Helpers/JwtHelper')
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 const cors = require('cors');
 const User = require("./Routes/UserRoute");
 const Brand = require("./Routes/BrandRoute");
