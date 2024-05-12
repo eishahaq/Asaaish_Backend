@@ -1,4 +1,4 @@
-const Reservation = require('../models/Reservation');
+const Reservation = require('../Models/Reservation');
 const createError = require('http-errors');
 
 const ReservationController = {
