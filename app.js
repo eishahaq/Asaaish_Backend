@@ -35,10 +35,12 @@ mongoose.connection.on('error',err => {
 mongoose.connection.on('connected',connected=>{
     console.log('Connected with database sucessfully'); 
 })
+
 app.use(cors({
-    origin: true,
-    credentials: true
-  }));
+    origin: '*',  // Allow all origins
+    credentials: true  // Credentials are supported
+}));
+
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json()); 
 
@@ -59,9 +61,9 @@ app.use('/Reservation', Reservation);
 
 
 
-app.get('/', verifyAccessToken, async (req, res, next) => {
-    res.send("Hello from express.")
-})
+app.get('/', (req, res) => { 
+  res.send('Hello, Azure! This is a Node.js application.'); 
+}); 
 
 
 app.use((err,req,res,next) => {
@@ -75,11 +77,11 @@ app.use((err,req,res,next) => {
 })
 
 
-const PORT = 4000
-
+const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
-})
+    console.log(`Server running on port ${PORT}`);
+});
+
 
 module.exports = app;
