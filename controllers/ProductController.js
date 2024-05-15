@@ -6,6 +6,7 @@ const User = require('../Models/User');
 const createError = require('http-errors');
 const Inventory = require('../Models/Inventory'); // Corrected require statement
 const Collection = require('../Models/Collection'); // Corrected require statement
+const ObjectIdGenerator = require('../Helpers/objectidGenerator'); // Adjust the path as needed
 
 const Papa = require('papaparse');
 const fs = require('fs');
@@ -26,7 +27,7 @@ const ProductController = {
                 return next(createError.Forbidden("Only admins and vendors can create products"));
             }
 
-            const { brandId, name, description, category, tags, price, images, offers, collection } = req.body;
+            const { id, brandId, name, description, category, tags, price, images, offers, collection } = req.body;
 
             // Validate the category
             const categoryExists = await Category.findById(category);
@@ -42,7 +43,13 @@ const ProductController = {
                 }
             }
 
+            let productId;
+            if (id) {
+                productId = ObjectIdGenerator.encode(id);
+            }
+
             const product = new Product({
+                _id: productId,
                 brandId,
                 name,
                 description,
@@ -52,17 +59,19 @@ const ProductController = {
                 images,
                 offers
             });
+
             await product.save();
-              // If a collection ID is provided, add the product to the collection
-        if (collection) {
-            const collectionDoc = await Collection.findById(collection);
-            if (!collectionDoc) {
-                return next(createError.BadRequest(`Collection with ID ${collection} does not exist`));
+
+            // If a collection ID is provided, add the product to the collection
+            if (collection) {
+                const collectionDoc = await Collection.findById(collection);
+                if (!collectionDoc) {
+                    return next(createError.BadRequest(`Collection with ID ${collection} does not exist`));
+                }
+                collectionDoc.products.push(product._id);
+                await collectionDoc.save();
             }
-            collectionDoc.products.push(product._id);
-            await collectionDoc.save();
-        }
-            console.log("product Created Successful")
+
             res.status(201).json(product);
         } catch (error) {
             next(createError.InternalServerError(error.message));
