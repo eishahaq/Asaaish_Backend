@@ -3,7 +3,7 @@ const Store = require('../Models/Store');
 const User = require('../Models/User');
 const Product = require('../models/Product');
 const createError = require('http-errors');
-const Vendor = require('../models/Vendor');
+const Vendor = require('../Models/Vendor');
 const mongoose = require('mongoose');
 
 const InventoryController = {

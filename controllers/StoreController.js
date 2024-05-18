@@ -1,7 +1,7 @@
 const Store = require('../Models/Store'); 
 const createError = require('http-errors');
 const User = require('../Models/User');
-const Vendor = require('../models/Vendor');
+const Vendor = require('../Models/Vendor');
 const Brand = require('../models/Brand');
 
 const StoreController = {
