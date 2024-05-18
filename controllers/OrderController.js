@@ -1,6 +1,6 @@
 // File: controllers/OrderController.js
-const Order = require('../models/Order');
-const Product = require('../models/Product');
+const Order = require('../Models/Order');
+const Product = require('../Models/Product');
 const Brand = require('../Models/Brand');
 const Vendor = require('../Models/Vendor');
 const createError = require('http-errors');
