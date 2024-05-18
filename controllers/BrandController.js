@@ -1,4 +1,4 @@
-const Brand = require('../models/Brand');
+const Brand = require('../Models/Brand');
 const createError = require('http-errors');
 const User = require('../Models/User');
 
