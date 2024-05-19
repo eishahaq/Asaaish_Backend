@@ -62,7 +62,7 @@ app.use('/Reservation', Reservation);
 
 
 app.get('/', (req, res) => { 
-  res.send('Hello, Azure! This is a Node.js application.'); 
+  res.send('Hello, Azure/Back4App! This is a Node.js application.'); 
 }); 
 
 
@@ -79,8 +79,8 @@ app.use((err,req,res,next) => {
 
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
 

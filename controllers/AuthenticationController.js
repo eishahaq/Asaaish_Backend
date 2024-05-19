@@ -1,6 +1,6 @@
 const User = require('../Models/User');
 const Customer = require('../Models/Customer');
-const Vendor = require('../models/Vendor');
+const Vendor = require('../Models/Vendor');
 const mongoose = require('mongoose');
 const createError = require('http-errors');
 const { authorizationSchema } = require('../Helpers/ValidationSchema');
