@@ -22,21 +22,21 @@ class ObjectIdGenerator {
         return hex;
     }
 
-    /**
-     * Convert a 24-character hexadecimal string back to the original string
-     * @param {string} hex - The 24-character hexadecimal string
-     * @returns {string} - The original string
-     */
+    
     static decode(hex) {
+        if (!hex) {
+            console.error('Decode function received a null or undefined hex string.');
+            throw new Error('Hex string is undefined or null.');
+        }
         if (hex.length !== 24) {
+            console.error(`Invalid hex string length: ${hex.length} for hex: ${hex}`);
             throw new Error('Hex string must be exactly 24 characters');
         }
 
-        hex = hex.replace(/0+$/, '');
-
         const buffer = Buffer.from(hex, 'hex');
-        console.log(buffer.toString('utf8'));
-        return buffer.toString('utf8');
+        const decodedString = buffer.toString('utf8');
+        console.log(`Decoded string: ${decodedString}`);
+        return decodedString;
     }
 }
 
