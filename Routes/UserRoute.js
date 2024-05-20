@@ -6,11 +6,12 @@ const AuthenticationController = require('../controllers/AuthenticationControlle
 
 // User routes
 router.get('/users', verifyAccessToken, UserController.getAllUsers); 
-router.get('/customers', verifyAccessToken, UserController.getAllCustomers); 
+router.get('/customers', UserController.getAllCustomers); 
 router.get('/vendors', UserController.getAllVendors); 
 router.get('/vendorbyid', verifyAccessToken,UserController.getVendorByUserId); 
 router.put('/user/:id', verifyAccessToken,UserController.updateUser); 
-router.delete('/user', verifyAccessToken,UserController.deleteUser); 
+router.put('/vendor/:id', verifyAccessToken,UserController.updateVendor); 
+router.delete('/:id', verifyAccessToken, UserController.deleteUser);
 
 
 // Authentication routes

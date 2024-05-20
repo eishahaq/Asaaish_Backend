@@ -10,7 +10,7 @@ const upload = multer({ dest: 'uploads/' }); // This will save files to an 'uplo
 
 router.post('/createproducts', verifyAccessToken, ProductController.createProduct); 
 
-router.get('/getproducts', verifyAccessToken, ProductController.getAllProducts); 
+router.get('/getproducts', ProductController.getAllProducts); 
 
 router.get('/getproducts/:id', ProductController.getProductById); 
 

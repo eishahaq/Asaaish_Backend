@@ -55,7 +55,7 @@ const AuthenticationController = {
                 console.log('Creating vendor...');
                 const vendor = new Vendor({
                     user: savedUser._id,
-                    brand: result.brandId, // Adjust to match the actual request field
+                    brand: result.brand, // Adjust to match the actual request field
                     stores: result.stores, // This should be an array of store ObjectId's
                 });
 
@@ -66,7 +66,8 @@ const AuthenticationController = {
             const accessToken = await signAccessToken(savedUser.id);
             const refreshToken = await signRefreshToken(savedUser.id);
             res.send({ accessToken, refreshToken });
-        } catch (error) {
+        } 
+        catch (error) {
             if (error.isJoi === true) error.status = 422;
             console.error('Joi validation error:', error.details);
             next(error);

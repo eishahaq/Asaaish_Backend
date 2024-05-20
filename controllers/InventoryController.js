@@ -27,30 +27,37 @@ const InventoryController = {
 
     async getAllInventory(req, res, next) {
         try {
-            // Extract vendor ID from the token's audience field
-            const vendorUserId = req.payload.aud;
+            // Extract user role from the token's payload
+            const userId = req.payload.aud;
+            const user = await User.findById(userId);
     
-            // Find the vendor by user ID
-            const vendor = await Vendor.findOne({ user: vendorUserId }).exec();
-            if (!vendor) {
-                return res.status(404).json({ message: "Vendor not found" });
+            if (user.role === 'Admin') {
+                // If user is admin, fetch all inventory items
+                const inventoryItems = await Inventory.find().populate('productId').populate('storeId').exec();
+                res.json(inventoryItems);
+            } else {
+                // If user is not admin, proceed with vendor-specific inventory retrieval logic
+                const vendorUserId = req.payload.aud;
+                const vendor = await Vendor.findOne({ user: vendorUserId }).exec();
+                if (!vendor) {
+                    return res.status(404).json({ message: "Vendor not found" });
+                }
+    
+                const inventoryItems = await Inventory.find({ 
+                    storeId: { $in: vendor.stores }
+                }).populate('productId').populate({
+                    path: 'storeId',
+                    match: { _id: { $in: vendor.stores }}
+                }).exec();
+    
+                res.json(inventoryItems);
             }
-    
-            // Fetch inventory items that belong to the vendor's stores
-            const inventoryItems = await Inventory.find({ 
-                storeId: { $in: vendor.stores }
-            }).populate('productId').populate({
-                path: 'storeId',
-                match: { _id: { $in: vendor.stores }}
-            }).exec();
-    
-            // Return the inventory items
-            res.json(inventoryItems);
         } catch (error) {
             console.error(error);
             next(error);
         }
     },
+    
 
     // Get inventory by product ID
     async getInventoryByProduct(req, res, next) {

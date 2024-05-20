@@ -1,12 +1,15 @@
 const User = require('../Models/User');
 const { verifyAccessToken } = require('../Helpers/JwtHelper');
 const Vendor = require('../Models/Vendor');
+const Customer = require('../Models/Customer');
 const createError = require('http-errors');
 
 const UserController = {
     async getAllUsers(req, res, next) {
         try {
-            if (req.user.role !== 'Admin') {
+            const userId = req.payload.aud;
+            const user = await User.findById(userId);
+            if (user.role !== 'Admin') {
                 throw createError.Forbidden("Only admins can access all users");
             }
             const users = await User.find();
@@ -15,6 +18,7 @@ const UserController = {
             next(err);
         }
     },
+    
 
     async getUserById(req, res, next) {
         try {
@@ -33,19 +37,19 @@ const UserController = {
     async updateUser(req, res, next) {
         try {
             const userId = req.payload.aud;
+            const user = await User.findById(userId);
             const userToUpdate = await User.findById(userId);
     
             if (!userToUpdate) {
                 throw createError.NotFound("User not found");
             }
     
-            if (req.user.role !== 'Admin' && req.user._id.toString() !== userToUpdate._id.toString()) {
+            if (user.role !== 'Admin' && req.user._id.toString() !== userToUpdate._id.toString()) {
                 throw createError.Forbidden("You don't have permission to update this user");
             }
     
             const updates = req.body;
-    
-            // Handle password change
+
             if (updates.oldPassword && updates.newPassword) {
                 const isMatch = await userToUpdate.isValidPassword(updates.oldPassword);
                 if (!isMatch) {
@@ -57,7 +61,8 @@ const UserController = {
             delete updates.oldPassword;
             delete updates.newPassword;
     
-            if (req.user.role !== 'Admin') {
+            if (user.role !== 'Admin') {
+                delete updates.address
                 delete updates.email;
                 delete updates.role;
                 delete updates.username;
@@ -67,6 +72,7 @@ const UserController = {
     
             const updatedUser = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true });
             res.status(200).json({ updated_user: updatedUser });
+            console.log(updated_User)
         } catch (err) {
             next(err);
         }
@@ -74,7 +80,9 @@ const UserController = {
 
     async deleteUser(req, res, next) {
         try {
-            if (req.user.role !== 'Admin') {
+            const userId = req.payload.aud;
+            const user = await User.findById(userId);
+            if (user.role !== 'Admin') {
                 throw createError.Forbidden("Only admins can delete users");
             }
 
@@ -83,6 +91,7 @@ const UserController = {
                 { $set: { status: "INACTIVE" } },
                 { new: true }
             );
+            
 
             if (!result) {
                 throw createError.NotFound("User not found");
@@ -158,8 +167,8 @@ const UserController = {
 
       async getAllCustomers(req, res, next) {
         try {
-            const customers = await User.find({ role: 'Customer' });
-            res.status(200).json(customers);
+            const customers = await Customer.find().populate('user');
+            res.status(200).json({ data: customers });
         } catch (error) {
             next(error);
         }

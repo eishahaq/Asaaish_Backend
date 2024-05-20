@@ -72,8 +72,46 @@ const ProductController = {
     // Updated to include 'tags' in populate methods
     async getAllProducts(req, res, next) {
         try {
+            // Fetch all products with their details
             const products = await Product.find().populate('brandId').populate('category').populate('tags');
-            res.status(200).json(products);
+    
+            // Prepare an array to store the formatted products
+            const formattedProducts = [];
+    
+            // Iterate over each product
+            for (const product of products) {
+                // Find the corresponding inventory entry for the product
+                const inventory = await Inventory.findOne({ productId: product._id });
+    
+                // If no inventory is found for the product, skip to the next product
+                if (!inventory) {
+                    continue;
+                }
+    
+                // Extract colors and sizes from the inventory variants
+                const colors = inventory.variants.map(variant => variant.color);
+                const sizes = inventory.variants.map(variant => variant.size);
+    
+                // Create the formatted product object
+                const formattedProduct = {
+                    id: product._id,
+                    name: product.name,
+                    description: product.description,
+                    category: product.category ? { id: product.category._id, name: product.category.name } : null,
+                    tags: product.tags.map(tag => ({ id: tag._id, name: tag.name })),
+                    price: product.price,
+                    images: product.images,
+                    colors: colors,
+                    sizes: sizes,
+                    variants: inventory.variants
+                };
+    
+                // Push the formatted product into the array
+                formattedProducts.push(formattedProduct);
+            }
+    
+            // Send the formatted products as response
+            res.status(200).json(formattedProducts);
         } catch (error) {
             next(createError.InternalServerError(error.message));
         }
