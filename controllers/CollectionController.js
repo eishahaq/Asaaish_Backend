@@ -1,4 +1,4 @@
-const Collection = require('../Models/Collection'); // Adjust path as needed
+const Collection = require('../Models/Collection'); 
 const createError = require('http-errors');
 
 const CollectionController = {

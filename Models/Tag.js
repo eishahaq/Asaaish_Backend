@@ -5,12 +5,12 @@ const TagSchema = new Schema({
   name: {
     type: String,
     required: true,
-    unique: true, // Ensures tag names are unique
+    unique: true, 
   },
-  parentCategory: { // Renamed from parentTag to parentCategory
+  parentCategory: {
     type: Schema.Types.ObjectId,
-    ref: 'Category', // Referencing Category collection
-    default: null // Indicates a tag may not have a parent category
+    ref: 'Category', 
+    default: null 
   }
 });
 

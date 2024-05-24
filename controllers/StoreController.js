@@ -1,30 +1,28 @@
 const Store = require('../Models/Store'); 
+const User = require('../Models/User'); 
+const Vendor = require('../Models/Vendor'); 
 const createError = require('http-errors');
-const User = require('../Models/User');
-const Vendor = require('../Models/Vendor');
-const Brand = require('../Models/Brand');
 
 const StoreController = {
-
     async createStore(req, res, next) {
         try {
             const userId = req.payload.aud;
             const user = await User.findById(userId);
-    
+
             if (!user) {
                 throw createError.NotFound("User not found");
             }
-    
+
             if (user.role === 'Customer') {
                 throw createError.Forbidden("Only admins and vendors can create stores");
             }
-            console.log(user);
-            const vendor = Vendor.findOne({ user: user._id });
-            console.log(vendor);
-    
+
             const { location, address, contactInfo, name, brand } = req.body;
-            
-            
+
+            if (!location || !Array.isArray(location.coordinates) || location.coordinates.length !== 2) {
+                throw createError.BadRequest('Invalid location coordinates');
+            }
+
             const store = new Store({
                 brand,
                 name,
@@ -35,20 +33,20 @@ const StoreController = {
                 address,
                 contactInfo
             });
-    
+
             const savedStore = await store.save();
-    
+
             if (user.role === 'Vendor') {
                 await Vendor.findOneAndUpdate(
                     { user: userId },
                     { $push: { stores: savedStore._id } }
                 );
             }
-    
+
             res.status(201).json(savedStore);
         } catch (error) {
             next(error);
-        }    
+        }
     },
 
     // Fetch all stores
@@ -123,7 +121,6 @@ const StoreController = {
                     return res.status(404).json({ message: 'No products found for the specified brand' });
                 }
     
-                // This will only execute if storesdata.length > 0
                 return res.status(200).json(storesdata);
            
         } catch (error) {
@@ -159,7 +156,7 @@ const StoreController = {
                 throw createError.Forbidden("Only admins and vendors can delete stores");
             }
 
-            if (req.payload.role !== 'Admin' && req.payload.role !== 'Vendor') {
+            if (user.role !== 'Admin' && user.role !== 'Vendor') {
                 throw createError.Forbidden("Only admins and vendors can delete stores");
             }
 

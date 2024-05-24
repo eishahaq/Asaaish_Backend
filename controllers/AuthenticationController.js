@@ -26,37 +26,35 @@ const AuthenticationController = {
                 email: result.email
             });
 
-            // if (result.role === 'Vendor' && req.payload.role !== 'Admin') {
-            //     throw createError.Forbidden("Only admins can create vendor accounts");
-            // }
-
             const savedUser = await user.save();
             console.log('User created:', savedUser);
 
             if (result.role === 'Customer') {
                 console.log('Creating customer...');
-                // Extract location and address from the request, if available
-                const locationCoordinates = result.locationCoordinates || []; // Ensure default value or validation
-                const userAddress = result.address || ''; // Ensure default value or validation
-    
+                const locationCoordinates = result.location.coordinates;
+                if (!locationCoordinates || !Array.isArray(locationCoordinates) || locationCoordinates.length !== 2) {
+                    throw createError.BadRequest('Invalid location coordinates');
+                }
+
                 const customer = new Customer({
                     user: savedUser._id,
                     location: {
                         type: 'Point',
                         coordinates: locationCoordinates
                     },
-                    address: userAddress
+                    address: result.address || ''
                 });
-    
+
                 const savedCustomer = await customer.save();
                 console.log('Customer created:', savedCustomer);
+
                 
             }  else if (result.role === 'Vendor') {
                 console.log('Creating vendor...');
                 const vendor = new Vendor({
                     user: savedUser._id,
-                    brand: result.brand, // Adjust to match the actual request field
-                    stores: result.stores, // This should be an array of store ObjectId's
+                    brand: result.brand, 
+                    stores: result.stores, 
                 });
 
                 const savedVendor = await vendor.save();

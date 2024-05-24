@@ -3,10 +3,8 @@ const router = express.Router();
 const ProductController = require('../controllers/ProductController');
 const { verifyAccessToken } = require('../Helpers/JwtHelper');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' }); // This will save files to an 'uploads' folder
+const upload = multer({ dest: 'uploads/' }); 
 
-
-// Routes for product operations
 
 router.post('/createproducts', verifyAccessToken, ProductController.createProduct); 
 
@@ -21,6 +19,7 @@ router.get('/getproductsbybrand/:brandId', ProductController.getProductsByBrand)
 router.put('/updateproducts/:id', verifyAccessToken, ProductController.updateProduct); 
 
 router.delete('/deleteproducts/:id', verifyAccessToken, ProductController.deleteProduct); 
+
 router.post('/bulk-import', verifyAccessToken, upload.single('file'), ProductController.bulkImportProducts);
 
 router.get('/by-store/:storeId', ProductController.getProductsByStore);

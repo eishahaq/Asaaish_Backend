@@ -15,12 +15,12 @@ const ProductSchema = new Schema({
     type: String,
     required: true
   },
-  category: { // Changed from 'categories' to 'category' for a single reference
+  category: { 
     type: Schema.Types.ObjectId,
     ref: 'Category',
     required: true
   },
-  tags: [{ // New field for referencing multiple Tags
+  tags: [{ 
     type: Schema.Types.ObjectId,
     ref: 'Tag'
   }],

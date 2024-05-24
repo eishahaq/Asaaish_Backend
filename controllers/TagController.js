@@ -1,21 +1,19 @@
 const Tag = require('../Models/Tag');
 const User = require('../Models/User');
-const Category = require('../Models/Category'); // Make sure to require the Category model
+const Category = require('../Models/Category'); 
 const createError = require('http-errors');
 
 const TagController = {
     async createTag(req, res, next) {
         try {
-            const userId = req.payload.aud; // Assuming JWT middleware sets this
+            const userId = req.payload.aud; 
             const user = await User.findById(userId);
 
             if (!['Admin', 'Vendor'].includes(user.role)) {
                 return next(createError(403, "Only admins and vendors can create tags"));
             }
 
-            const { name, parentCategory } = req.body; // Changed from parentTag to parentCategory
-
-            // Additional check: Validate parentCategory exists if provided
+            const { name, parentCategory } = req.body; 
             if (parentCategory) {
                 const categoryExists = await Category.findById(parentCategory);
                 if (!categoryExists) {
@@ -25,7 +23,7 @@ const TagController = {
 
             const tag = new Tag({
                 name,
-                parentCategory: parentCategory || null, // Changed from parentTag to parentCategory
+                parentCategory: parentCategory || null, 
             });
             const savedTag = await tag.save();
             res.status(201).json(savedTag);
@@ -34,10 +32,8 @@ const TagController = {
         }
     },
 
-    // No changes needed for getAllTags and getTagById
     async getAllTags(req, res, next) {
         try {
-            // Changed to populate 'parentCategory' instead of 'parentTag'
             const tags = await Tag.find().populate('parentCategory');
             res.json(tags);
         } catch (error) {
@@ -47,7 +43,6 @@ const TagController = {
 
     async getTagById(req, res, next) {
         try {
-            // Changed to populate 'parentCategory' instead of 'parentTag'
             const tag = await Tag.findById(req.params.id).populate('parentCategory');
             if (!tag) {
                 return next(createError(404, 'Tag not found'));
@@ -77,7 +72,6 @@ const TagController = {
         }
     },
 
-    // No changes needed for updateTag and deleteTag, assuming you're updating/deleting by tag ID
     async updateTag(req, res, next) {
         try {
             const userId = req.payload.aud;
@@ -87,7 +81,6 @@ const TagController = {
                 return next(createError(403, "Only admins and vendors can update tags"));
             }
 
-            // Before updating, check if the new parentCategory exists if provided
             if (req.body.parentCategory) {
                 const categoryExists = await Category.findById(req.body.parentCategory);
                 if (!categoryExists) {
@@ -106,7 +99,6 @@ const TagController = {
     },
 
     async deleteTag(req, res, next) {
-        // Method remains the same as tags are deleted by their ID
         try {
             const userId = req.payload.aud;
             const user = await User.findById(userId);

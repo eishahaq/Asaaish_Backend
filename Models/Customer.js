@@ -3,7 +3,7 @@ const Schema = mongoose.Schema
 
 const CustomerSchema = new Schema({
     user: { 
-        type: mongoose.Schema.Types.ObjectId, 
+        type: Schema.Types.ObjectId, 
         ref: 'User', 
         required: true 
     },
@@ -17,8 +17,6 @@ const CustomerSchema = new Schema({
     address: String,
 },
 { timestamps: true });
-
-
 
 const customer = mongoose.model('Customer', CustomerSchema)
 module.exports = customer

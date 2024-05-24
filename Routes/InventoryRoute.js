@@ -3,7 +3,6 @@ const router = express.Router();
 const InventoryController = require('../controllers/InventoryController');
 const { verifyAccessToken } = require('../Helpers/JwtHelper');
 
-// Routes for inventory operations
 
 router.post('/createinventory', verifyAccessToken, InventoryController.addInventory); 
 
@@ -21,11 +20,9 @@ router.get('/getproductvariants/:productId', InventoryController.getProductVaria
 
 router.get('/getinventory/store/:storeId', verifyAccessToken, InventoryController.getInventoryByStore); 
 
-// Route to get store location by inventory ID
 router.get('/location/:inventoryId', InventoryController.getStoreLocationByInventoryId);
 
 router.get('/location/product/:productId/', InventoryController.getAllStoreLocationsForProduct);
-
 
 router.put('/getinventory/:id', verifyAccessToken, InventoryController.updateInventory);
 

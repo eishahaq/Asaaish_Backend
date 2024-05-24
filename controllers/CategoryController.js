@@ -5,17 +5,6 @@ const createError = require('http-errors');
 const CategoryController = {
     async createCategory(req, res, next) {
         try {
-            //const userId = req.payload.aud; // Make sure `req.payload` is correctly populated
-            // const user = await User.findById(userId);
-    
-            // if (!user) {
-            //     return next(createError(404, "User not found"));
-            // }
-    
-            // if (!['Admin', 'Vendor'].includes(user.role)) {
-            //     return next(createError(403, "Only admins and vendors can create categories"));
-            // }
-            console.log("im in api");
             const { name, description } = req.body;
             const categoryExists = await Category.findOne({ name });
     
@@ -31,7 +20,7 @@ const CategoryController = {
             const savedCategory = await category.save();
             res.status(201).json(savedCategory);
         } catch (error) {
-            next(error); // Make sure your error handling middleware is properly set up to catch this
+            next(error); 
         }
     },    
 
@@ -59,13 +48,6 @@ const CategoryController = {
 
     async updateCategory(req, res, next) {
         try {
-            // const userId = req.payload.aud;
-            // const user = await User.findById(userId);
-
-            // if (!['Admin', 'Vendor'].includes(user.role)) {
-            //     return next(createError(403, "Only admins and vendors can update categories"));
-            // }
-
             const { name, description } = req.body;
             const updatedCategory = await Category.findByIdAndUpdate(req.params.id, { name, description }, { new: true });
             if (!updatedCategory) {
@@ -79,13 +61,6 @@ const CategoryController = {
 
     async deleteCategory(req, res, next) {
         try {
-            // const userId = req.payload.aud;
-            // const user = await User.findById(userId);
-
-            // if (!['Admin', 'Vendor'].includes(user.role)) {
-            //     return next(createError(403, "Only admins and vendors can delete categories"));
-            // }
-
             const deletedCategory = await Category.findByIdAndDelete(req.params.id);
             if (!deletedCategory) {
                 return next(createError(404, 'Category not found'));

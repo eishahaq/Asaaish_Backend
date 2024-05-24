@@ -34,50 +34,24 @@ const UserController = {
             next(err);
         }
     },
+
     async updateUser(req, res, next) {
         try {
             const userId = req.payload.aud;
             const user = await User.findById(userId);
-            const userToUpdate = await User.findById(userId);
-    
-            if (!userToUpdate) {
-                throw createError.NotFound("User not found");
+            if (user.role === 'Customer') {
+                throw createError.Forbidden("Only admins and vendors can update stores");
             }
-    
-            if (user.role !== 'Admin' && req.user._id.toString() !== userToUpdate._id.toString()) {
-                throw createError.Forbidden("You don't have permission to update this user");
+              const updatedUser = await Customer.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('user');
+              if (!updatedUser) {
+                throw createError.NotFound('User not found');
+              }
+              res.status(200).json(updatedUser);
+            } catch (error) {
+              next(error);
             }
+          },
     
-            const updates = req.body;
-
-            if (updates.oldPassword && updates.newPassword) {
-                const isMatch = await userToUpdate.isValidPassword(updates.oldPassword);
-                if (!isMatch) {
-                    throw createError.Unauthorized("Old password is incorrect");
-                }
-                const salt = await bcrypt.genSalt(10);
-                updates.password = await bcrypt.hash(updates.newPassword, salt);
-            }
-            delete updates.oldPassword;
-            delete updates.newPassword;
-    
-            if (user.role !== 'Admin') {
-                delete updates.address
-                delete updates.email;
-                delete updates.role;
-                delete updates.username;
-                delete updates.status;
-                delete updates.brand;
-            }
-    
-            const updatedUser = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true });
-            res.status(200).json({ updated_user: updatedUser });
-            console.log(updated_User)
-        } catch (err) {
-            next(err);
-        }
-    },    
-
     async deleteUser(req, res, next) {
         try {
             const userId = req.payload.aud;
@@ -114,13 +88,11 @@ const UserController = {
 
     async getVendorByUserId(req, res, next) {
         try {
-            // Log when the function starts execution
             console.log('getVendorByUserId function started');
     
-            const userId = req.payload.aud; // Assuming the user ID is stored in the JWT token's audience (aud) field
-            console.log('User ID:', userId); // Existing log
+            const userId = req.payload.aud; 
+            console.log('User ID:', userId);
     
-            // Log before making a database call
             console.log('Fetching vendor for user ID:', userId);
     
             const vendor = await Vendor.findOne({ user: userId })
@@ -128,34 +100,32 @@ const UserController = {
               .populate('brand')
               .populate('stores');
     
-            // Log after receiving the response from the database
             console.log('Vendor fetch successful for user ID:', userId);
     
             if (!vendor) {
-                console.log('Vendor not found for user ID:', userId); // Log when the vendor is not found
+                console.log('Vendor not found for user ID:', userId); 
                 throw createError.NotFound('Vendor not found');
             }
     
-            // Log the vendor details (if not confidential)
             console.log('Vendor details:', vendor);
     
             res.status(200).json(vendor);
     
-            // Log successful end of the function
             console.log('getVendorByUserId function completed successfully');
         } catch (error) {
-            // Log the error before passing it to the next middleware
             console.error('Error in getVendorByUserId function:', error);
             next(error);
         }
     },
     
-      // Update vendor details
       async updateVendor(req, res, next) {
         try {
-          const userId = req.payload.aud;
-          const { brand, stores } = req.body; // Assuming you want to update the brand and stores
-          const updatedVendor = await Vendor.findOneAndUpdate({ user: userId }, { brand, stores }, { new: true }).populate('user').populate('brand').populate('stores');
+        const userId = req.payload.aud;
+        const user = await User.findById(userId);
+        if (user.role === 'Customer') {
+            throw createError.Forbidden("Only admins and vendors can update stores");
+        }
+          const updatedVendor = await Vendor.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('user').exec();
           if (!updatedVendor) {
             throw createError.NotFound('Vendor not found');
           }
@@ -164,6 +134,7 @@ const UserController = {
           next(error);
         }
       },
+
 
       async getAllCustomers(req, res, next) {
         try {
@@ -174,8 +145,6 @@ const UserController = {
         }
     }
     
-
-
 };
 
 module.exports = UserController;

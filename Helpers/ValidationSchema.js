@@ -7,15 +7,14 @@ const authorizationSchema = Joi.object({
     firstname: Joi.string(),
     lastname: Joi.string(),
     password: Joi.string(),
-    brand: Joi.string(),  // Added brand field
-    stores: Joi.array(),  // Added stores field (add item validation if necessary)
-    address: Joi.string(), // Assuming this is still needed; if not, remove it
-    location: {  // Correctly nesting the location schema
-    type: Joi.string().valid('Point').required(),
-    coordinates: Joi.array().items(Joi.number()).length(2).required()
-    },
+    brand: Joi.string(),
+    stores: Joi.string(),
+    address: Joi.string(),
+    location: Joi.object({
+        type: Joi.string().valid('Point'),
+        coordinates: Joi.array().items(Joi.number()).length(2)
+    }),
     status: Joi.string().valid('ACTIVE', 'INACTIVE')
-
 });
 
 module.exports = {

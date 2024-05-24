@@ -26,8 +26,7 @@ const BrandController = {
             next(error);
         }
     },
-
-    // Get all brands
+  
     async getAllBrands(req, res, next) {
         try {
             const brands = await Brand.find({});
@@ -37,7 +36,7 @@ const BrandController = {
         }
     },
 
-    // Get a single brand by ID
+    
     async getBrandById(req, res, next) {
         try {
             const brandId = req.params.id;
@@ -51,7 +50,7 @@ const BrandController = {
         }
     },
 
-    // Update a brand
+    
     async updateBrand(req, res, next) {
         try {
             const userId = req.payload.aud;
@@ -73,7 +72,7 @@ const BrandController = {
         }
     },
 
-    // Delete a brand
+    
     async deleteBrand(req, res, next) {
         try {
             const userId = req.payload.aud;

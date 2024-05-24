@@ -1,4 +1,4 @@
-const Inventory = require('../Models/Inventory'); // Adjust the path as necessary
+const Inventory = require('../Models/Inventory'); 
 const Store = require('../Models/Store');
 const User = require('../Models/User');
 const Product = require('../Models/Product');
@@ -7,7 +7,7 @@ const Vendor = require('../Models/Vendor');
 const mongoose = require('mongoose');
 
 const InventoryController = {
-    // Add new inventory
+   
     async addInventory(req, res, next) {
         try {
             const { productId, storeId, variants, offers } = req.body;
@@ -27,16 +27,16 @@ const InventoryController = {
 
     async getAllInventory(req, res, next) {
         try {
-            // Extract user role from the token's payload
+          
             const userId = req.payload.aud;
             const user = await User.findById(userId);
     
             if (user.role === 'Admin') {
-                // If user is admin, fetch all inventory items
+                
                 const inventoryItems = await Inventory.find().populate('productId').populate('storeId').exec();
                 res.json(inventoryItems);
             } else {
-                // If user is not admin, proceed with vendor-specific inventory retrieval logic
+               
                 const vendorUserId = req.payload.aud;
                 const vendor = await Vendor.findOne({ user: vendorUserId }).exec();
                 if (!vendor) {
@@ -58,8 +58,6 @@ const InventoryController = {
         }
     },
     
-
-    // Get inventory by product ID
     async getInventoryByProduct(req, res, next) {
         try {
             const inventory = await Inventory.find({ productId: req.params.productId }).populate('storeId').populate('productId');
@@ -71,7 +69,6 @@ const InventoryController = {
         }
     },
 
-    // Get inventory by store ID
     async getInventoryByStore(req, res, next) {
         try {
             const inventory = await Inventory.find({ storeId: req.params.storeId }).populate('productId');
@@ -82,7 +79,6 @@ const InventoryController = {
         }
     },
 
-    // Update inventory
     async updateInventory(req, res, next) {
         try {
             const updatedInventory = await Inventory.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -92,35 +88,11 @@ const InventoryController = {
             next(error);
         }
     },
-    // Get inventory by store ID and brand
-// async getInventoryByStoreAndBrand(req, res, next) {
-//     try {
-//         // Extract storeId and brand from request parameters or query
-//         const { storeId, brand } = req.params; // or req.query if you're using query parameters
-
-//         // Find Product IDs by brand
-//         const products = await Product.find({ brand }).exec();
-//         const productIds = products.map(product => product._id);
-
-//         // Find inventory by store ID and product IDs
-//         const inventory = await Inventory.find({
-//             storeId,
-//             productId: { $in: productIds }
-//         }).populate('productId').populate('storeId');
-
-//         if (!inventory.length) throw createError.NotFound(`Inventory not found for given store and brand`);
-
-//         res.status(200).json(inventory);
-//     } catch (error) {
-//         next(error);
-//     }
-// },
-// Get inventory by store ID and product ID
+    
 async getInventoryByStoreAndProduct(req, res, next) {
     try {
-        const { storeId, productId } = req.params; // Extract storeId and productId from URL parameters
+        const { storeId, productId } = req.params; 
 
-        // Find inventory by store ID and product ID
         const inventory = await Inventory.findOne({
             storeId,
             productId
@@ -137,17 +109,14 @@ async getInventoryByStoreAndProduct(req, res, next) {
 
 async getProductsByStore(req, res, next) {
     try {
-        const { storeId } = req.params; // Assuming storeId is passed as a URL parameter
+        const { storeId } = req.params; 
 
-        // Find inventory items by store ID and populate the product details
         const inventoryItems = await Inventory.find({ storeId })
             .populate('productId')
             .exec();
 
-        // Extract the populated products from the inventory items
         const products = inventoryItems.map(item => item.productId);
 
-        // Optionally, you might want to remove duplicate products if any
         const uniqueProducts = [...new Map(products.map(product => [product._id, product])).values()];
 
         if (!uniqueProducts.length) throw createError.NotFound('No products found for given store');
@@ -159,7 +128,6 @@ async getProductsByStore(req, res, next) {
     }
 },
 
-    // Delete inventory
     async deleteInventory(req, res, next) {
         try {
             const deletedInventory = await Inventory.findByIdAndDelete(req.params.id);
@@ -187,7 +155,6 @@ async getProductsByStore(req, res, next) {
       });
     });
     
-    // Convert sets to arrays for JSON serialization
     Object.keys(variants).forEach(color => {
       variants[color] = Array.from(variants[color]);
     });
@@ -203,7 +170,6 @@ async getAllInventoryLocations(req, res, next) {
     try {
         const inventoryList = await Inventory.find().populate('storeId');
         const locations = inventoryList.map(inventory => {
-            // Assuming the 'Store' model includes a 'location' field
             return {
                 inventoryId: inventory._id,
                 productId: inventory.productId,
@@ -219,11 +185,11 @@ async getAllInventoryLocations(req, res, next) {
 
 async getStoreLocationByInventoryId(req, res, next) {
     try {
-        const { inventoryId } = req.params; // Get inventoryId from URL parameters
+        const { inventoryId } = req.params;
         const inventoryItem = await Inventory.findById(inventoryId)
             .populate({
-                path: 'storeId', // Assuming the Inventory schema has a 'storeId' field
-                select: 'location' // Only fetch the location field from the Store document
+                path: 'storeId', 
+                select: 'location' 
             });
 
         if (!inventoryItem) {
@@ -248,7 +214,7 @@ async getStoreLocationByInventoryId(req, res, next) {
 async getAllStoreLocationsForProduct(req, res, next) {
     try {
         const { productId } = req.params;
-        // Find inventories by product ID and populate both storeId and productId details
+        
         const inventories = await Inventory.find({ productId: productId })
                                 .populate('storeId')
                                 .populate('productId');
@@ -271,7 +237,7 @@ async getAllStoreLocationsForProduct(req, res, next) {
                     }))
                 };
             }
-        }).filter(location => location !== undefined); // Filter out any undefined values
+        }).filter(location => location !== undefined); 
 
         res.json(locations);
     } catch (error) {

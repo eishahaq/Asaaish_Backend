@@ -7,7 +7,7 @@ module.exports = {
     signAccessToken: (userId) => {
         return new Promise((resolve, reject) => {
             const payload = {
-                aud: userId // Include the userId in the payload
+                aud: userId 
             };
             const secret = "wow";
             const options = {
