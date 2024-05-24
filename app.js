@@ -62,7 +62,7 @@ app.use('/Reservation', Reservation);
 
 
 app.get('/', (req, res) => { 
-  res.send('Hello, Azure! This is a Node.js application.'); 
+  res.send('Hello, Azure/Back4App! This is a Node.js application.'); 
 }); 
 
 
