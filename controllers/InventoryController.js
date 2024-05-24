@@ -78,10 +78,21 @@ const InventoryController = {
     // Update inventory
     async updateInventory(req, res, next) {
         try {
+            console.log('Update Inventory request received'); // Log the entry into the method
+            console.log(`Request params: ${JSON.stringify(req.params)}`); // Log the request parameters
+            console.log(`Request body: ${JSON.stringify(req.body)}`); // Log the request body
+    
             const updatedInventory = await Inventory.findByIdAndUpdate(req.params.id, req.body, { new: true });
-            if (!updatedInventory) throw createError.NotFound('Inventory not found');
+    
+            if (!updatedInventory) {
+                console.error('Inventory not found'); // Log if the inventory is not found
+                throw createError.NotFound('Inventory not found');
+            }
+    
+            console.log('Updated inventory:', updatedInventory); // Log the updated inventory details
             res.status(200).json(updatedInventory);
         } catch (error) {
+            console.error('Error updating inventory:', error.message); // Log any error that occurs
             next(error);
         }
     },

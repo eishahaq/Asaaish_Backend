@@ -3,6 +3,8 @@ const Order = require('../Models/Order');
 const Product = require('../Models/Product');
 const Brand = require('../Models/Brand');
 const Vendor = require('../Models/Vendor');
+const Inventory = require('../Models/Inventory');
+
 const createError = require('http-errors');
 const transporter = require('../config/mailConfig')
 const OrderController = {
@@ -99,44 +101,97 @@ const OrderController = {
         }
     },
 
-    async getVendorOrders(req, res) {
-        try {
-            const vendorId = req.payload.aud;  
-            console.log(vendorId);
-            // Fetch the vendor to get associated brands
-            const vendor = await Vendor.findOne({ user: vendorId }).populate('brand');
-            console.log(vendor);
-            if (!vendor) {
-                return res.status(404).json({ message: 'Vendor not found.' });
-            }
+    // async getVendorOrders(req, res) {
+    //     try {
+    //         const vendorId = req.payload.aud;  
+    //         console.log(vendorId);
+    //         // Fetch the vendor to get associated brands
+    //         const vendor = await Vendor.findOne({ user: vendorId }).populate('brand');
+    //         console.log(vendor);
+    //         if (!vendor) {
+    //             return res.status(404).json({ message: 'Vendor not found.' });
+    //         }
     
-            console.log('Brands associated with vendor:', vendor.brand);
+    //         console.log('Brands associated with vendor:', vendor.brand);
 
-            // Fetch products linked to these brands
-            const products = await Product.find({ brandId: { $in: vendor.brandy } }).select('_id');
-            console.log('Products found:', products);
+    //         // Fetch products linked to these brands
+    //         const products = await Product.find({ brandId: { $in: vendor.brand } }).select('_id');
+    //         console.log('Products found:', products);
     
-            if (products.length === 0) {
-                return res.status(404).json({ message: 'No products linked to vendor brands found.' });
+    //         if (products.length === 0) {
+    //             return res.status(404).json({ message: 'No products linked to vendor brands found.' });
+    //         }
+    
+    //         const productIds = products.map(product => product._id);
+    
+    //         // Fetch orders containing these products
+    //         const orders = await Order.find({
+    //             'items.productId': { $in: productIds }
+    //         }).populate({
+    //             path: 'items.productId',
+    //             populate: { path: 'brandId' }
+    //         });
+    
+    //         console.log('Orders found:', orders);
+    //         res.status(200).json(orders);
+    //     } catch (error) {
+    //         console.error('Error fetching orders for vendor:', error);
+    //         res.status(500).json({ message: 'Internal server error' });
+    //     }
+    // }
+    
+    async getVendorOrders(req, res, next) {
+        try {
+            const vendorId = req.payload.aud;
+            console.log('Vendor ID from token:', vendorId);
+    
+            // Find the vendor based on the user ID
+            const vendor = await Vendor.findOne({ user: vendorId }).exec();
+            if (!vendor) {
+                console.log('Vendor not found for user ID:', vendorId);
+                return res.status(404).json({ message: "Vendor not found" });
             }
     
-            const productIds = products.map(product => product._id);
+            console.log('Vendor found:', vendor);
     
-            // Fetch orders containing these products
+            // Get the store IDs associated with the vendor
+            const storeIds = vendor.stores;
+            console.log('Store IDs associated with vendor:', storeIds);
+    
+            // Find all inventories related to these stores
+            const inventories = await Inventory.find({ storeId: { $in: storeIds } }).exec();
+            console.log('Inventories found:', inventories);
+    
+            // Extract the inventory IDs
+            const inventoryIds = inventories.map(inventory => inventory._id);
+            console.log('Inventory IDs:', inventoryIds);
+    
+            if (inventoryIds.length === 0) {
+                console.log('No inventory IDs found for the vendor stores.');
+                return res.status(404).json({ message: "No inventory found for vendor stores" });
+            }
+    
+            // Find orders that contain items with these inventory IDs
             const orders = await Order.find({
-                'items.productId': { $in: productIds }
+                'items.inventoryId': { $in: inventoryIds }
             }).populate({
                 path: 'items.productId',
                 populate: { path: 'brandId' }
-            });
+            }).populate('items.inventoryId');
     
             console.log('Orders found:', orders);
+    
+            if (orders.length === 0) {
+                console.log('No orders found for the given inventory IDs.');
+            }
+    
             res.status(200).json(orders);
         } catch (error) {
             console.error('Error fetching orders for vendor:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            next(createError.InternalServerError(error));
         }
     }
+    
     
     
 };
