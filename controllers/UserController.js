@@ -2,6 +2,7 @@ const User = require('../Models/User');
 const { verifyAccessToken } = require('../Helpers/JwtHelper');
 const Vendor = require('../Models/Vendor');
 const createError = require('http-errors');
+const bcrypt = require('bcrypt');
 
 const UserController = {
     async getAllUsers(req, res, next) {
@@ -32,45 +33,54 @@ const UserController = {
     },
     async updateUser(req, res, next) {
         try {
-            const userId = req.payload.aud;
-            const userToUpdate = await User.findById(userId);
-    
-            if (!userToUpdate) {
-                throw createError.NotFound("User not found");
+          const userId = req.payload.aud;  // Get the user ID from the payload
+          const userToUpdate = await User.findById(userId);  // Fetch the user details
+      
+          if (!userToUpdate) {
+            throw createError.NotFound("User not found");
+          }
+      
+          // Fetching the full user details to get the role
+          const fullUserDetails = await User.findById(req.payload.aud);
+          if (!fullUserDetails) {
+            throw createError.Unauthorized("User not found");
+          }
+      
+          console.log('User role:', fullUserDetails.role);
+      
+          if (fullUserDetails.role !== 'Admin' && fullUserDetails._id.toString() !== userToUpdate._id.toString()) {
+            throw createError.Forbidden("You don't have permission to update this user");
+          }
+      
+          const updates = req.body;
+      
+          // Handle password change
+          if (updates.oldPassword && updates.newPassword) {
+            const isMatch = await userToUpdate.isValidPassword(updates.oldPassword);
+            if (!isMatch) {
+              throw createError.Unauthorized("Old password is incorrect");
             }
-    
-            if (req.user.role !== 'Admin' && req.user._id.toString() !== userToUpdate._id.toString()) {
-                throw createError.Forbidden("You don't have permission to update this user");
-            }
-    
-            const updates = req.body;
-    
-            // Handle password change
-            if (updates.oldPassword && updates.newPassword) {
-                const isMatch = await userToUpdate.isValidPassword(updates.oldPassword);
-                if (!isMatch) {
-                    throw createError.Unauthorized("Old password is incorrect");
-                }
-                const salt = await bcrypt.genSalt(10);
-                updates.password = await bcrypt.hash(updates.newPassword, salt);
-            }
-            delete updates.oldPassword;
-            delete updates.newPassword;
-    
-            if (req.user.role !== 'Admin') {
-                delete updates.email;
-                delete updates.role;
-                delete updates.username;
-                delete updates.status;
-                delete updates.brand;
-            }
-    
-            const updatedUser = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true });
-            res.status(200).json({ updated_user: updatedUser });
+            const salt = await bcrypt.genSalt(10);
+            updates.password = await bcrypt.hash(updates.newPassword, salt);
+          }
+          delete updates.oldPassword;
+          delete updates.newPassword;
+      
+          if (fullUserDetails.role !== 'Admin') {
+            delete updates.email;
+            delete updates.role;
+            delete updates.username;
+            delete updates.status;
+            delete updates.brand;
+          }
+      
+          const updatedUser = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true });
+          res.status(200).json({ updated_user: updatedUser });
         } catch (err) {
-            next(err);
+          console.error('Error updating user:', err);
+          next(err);
         }
-    },    
+      },    
 
     async deleteUser(req, res, next) {
         try {

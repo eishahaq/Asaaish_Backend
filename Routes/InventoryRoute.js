@@ -27,7 +27,7 @@ router.get('/location/:inventoryId', InventoryController.getStoreLocationByInven
 router.get('/location/product/:productId/', InventoryController.getAllStoreLocationsForProduct);
 
 
-router.put('/getinventory/:id', verifyAccessToken, InventoryController.updateInventory);
+router.put('/updateinventory/:id', verifyAccessToken, InventoryController.updateInventory);
 
 router.delete('/getinventory/:id', verifyAccessToken, InventoryController.deleteInventory);
 

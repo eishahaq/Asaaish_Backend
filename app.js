@@ -23,7 +23,18 @@ const http = require('http');
 // Create HTTP server and initialize Socket.IO
 const app = express();
 const server = http.createServer(app);
-const io = require('socket.io')(server);
+const io = require('socket.io')(server, {
+    cors: {
+        origin: 'http://localhost:3000', // Allow requests from this origin
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        credentials: true // Allow cookies to be sent
+    }
+});
+
+app.use(cors({
+    origin: 'http://localhost:3000', // Allow requests from this origin
+    credentials: true // Allow cookies to be sent
+}));
 
 app.use(express.json()); // This should be near the top, before your route handlers.
 
@@ -38,11 +49,6 @@ mongoose.connection.on('error', err => {
 mongoose.connection.on('connected', () => {
     console.log('Connected with database successfully'); 
 });
-
-app.use(cors({
-    origin: '*',  // Allow all origins
-    credentials: true  // Credentials are supported
-}));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json()); 
