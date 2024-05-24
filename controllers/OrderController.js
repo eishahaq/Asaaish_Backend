@@ -100,26 +100,33 @@ const OrderController = {
 
     async getVendorOrders(req, res) {
         try {
-            const vendorId = req.payload.aud;  
-            console.log(vendorId);
+            const vendorId = req.payload.aud;
+            console.log(`Vendor ID from token: ${vendorId}`);
+            
             // Fetch the vendor to get associated brands
             const vendor = await Vendor.findOne({ user: vendorId }).populate('brand');
-            console.log(vendor);
+            console.log(`Vendor found: ${vendor}`);
+            
             if (!vendor) {
                 return res.status(404).json({ message: 'Vendor not found.' });
             }
     
+            if (!vendor.brand || vendor.brand.length === 0) {
+                return res.status(404).json({ message: 'Vendor has no associated brands.' });
+            }
+    
             console.log('Brands associated with vendor:', vendor.brand);
-
+    
             // Fetch products linked to these brands
-            const products = await Product.find({ brandId: { $in: vendor.brandy } }).select('_id');
-            console.log('Products found:', products);
+            const products = await Product.find({ brandId: { $in: vendor.brand } }).select('_id');
+            console.log(`Products found: ${products.length}`, products);
     
             if (products.length === 0) {
                 return res.status(404).json({ message: 'No products linked to vendor brands found.' });
             }
     
             const productIds = products.map(product => product._id);
+            console.log(`Product IDs: ${productIds}`);
     
             // Fetch orders containing these products
             const orders = await Order.find({
@@ -129,13 +136,19 @@ const OrderController = {
                 populate: { path: 'brandId' }
             });
     
-            console.log('Orders found:', orders);
+            console.log(`Orders found: ${orders.length}`, orders);
+    
+            if (orders.length === 0) {
+                return res.status(404).json({ message: 'No orders found for the vendor products.' });
+            }
+    
             res.status(200).json(orders);
         } catch (error) {
             console.error('Error fetching orders for vendor:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
-    }
+    },
+    
     
     
 };

@@ -2,6 +2,8 @@ const Reservation = require('../Models/Reservation');
 const Product = require('../models/Product');
 const Inventory = require('../Models/Inventory');
 const User = require('../Models/User');
+const Vendor = require('../Models/Vendor');
+
 const createError = require('http-errors');
 
 const ReservationController = {
@@ -252,19 +254,30 @@ const ReservationController = {
 
     async getVendorReservations(req, res, next) {
         try {
-            const vendorId = req.payload.aud; // Get vendor ID from JWT payload
-            const products = await Product.find({ vendor: vendorId });
-            const productIds = products.map(product => product._id);
-
+            const vendorId = req.payload.aud; 
+    
+            const vendor = await Vendor.findOne({ user: vendorId }).exec();
+            if (!vendor) {
+                return res.status(404).json({ message: "Vendor not found" });
+            }
+            const storeIds = vendor.stores;
+    
+            const inventories = await Inventory.find({ storeId: { $in: storeIds } }).exec();
+            const inventoryIds = inventories.map(inventory => inventory._id);
+    
             const reservations = await Reservation.find({
-                'items.productId': { $in: productIds }
+                'items.inventoryId': { $in: inventoryIds }
             }).populate('items.productId').populate('items.inventoryId');
-
+    
             res.status(200).json(reservations);
         } catch (error) {
             next(createError.InternalServerError(error));
         }
-    },
+    },  
+    
+    
+    
+    
 
     async cancelReservationCustomer(req, res, next) {
         try {
