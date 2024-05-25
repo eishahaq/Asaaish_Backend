@@ -17,6 +17,411 @@ const mongoose = require('mongoose');
 
 
 const ProductController = {
+    async makeancomboOutfit(req, res, next) {
+        try {
+            const { color, budget, gender, style } = req.query;
+            if (!color || !budget || !gender) {
+                console.log("Color, budget, or gender missing");
+                return next(createError.BadRequest('Color, budget, and gender are required.'));
+            }
+    
+            // Convert budget to a number
+            const budgetNumber = parseFloat(budget);
+            if (isNaN(budgetNumber)) {
+                console.log("Invalid budget");
+                return next(createError.BadRequest('Budget must be a valid number.'));
+            }
+    
+            // Define styles and associated tags
+            const styles = {
+                formal: ["formal", "semiformal", "embroidered", "stitched", "3-piece", "shirt collar", "band collar", "plain", "regular fit", "round collar"],
+                fancy: ["fancy", "festive", "embellished", "schiffli", "jacquard", "radiant", "block-print", "chundri crochet", "silk", "raw silk", "digital printed"],
+                casual: ["casual", "causal", "caual", "unstitched", "wash n wear", "twil", "cotton", "lawn", "slub lawn", "printed", "solid"],
+                traditional: ["traditional", "pur noor", "khaadi net"],
+                modern: ["modern"]
+            };
+    
+            // Fetch products that have the specified gender tag
+            const genderTag = await Tag.findOne({ name: gender.toLowerCase() }).lean();
+            if (!genderTag) {
+                console.log("Gender tag not found");
+                return next(createError.BadRequest('Invalid gender specified.'));
+            }
+    
+            let productQuery = { tags: genderTag._id };
+    
+            // If style is provided, add style tags to the query
+            if (style && styles[style.toLowerCase()]) {
+                const styleTags = await Tag.find({ name: { $in: styles[style.toLowerCase()] } }).lean();
+                const styleTagIds = styleTags.map(tag => tag._id);
+                console.log("Fetched style tags:", styleTags);
+    
+                // Update query to include style tags along with gender tag
+                productQuery.tags = { $all: [genderTag._id], $in: styleTagIds };
+            }
+    
+            const productsWithGenderAndStyleTags = await Product.find(productQuery).populate('tags category').lean();
+            console.log("Fetched products with gender and style tags:", productsWithGenderAndStyleTags);
+    
+            // Fetch inventory items and filter by color in variants
+            const inventoryItems = await Inventory.find({ productId: { $in: productsWithGenderAndStyleTags.map(p => p._id) } }).populate('productId').lean();
+            console.log("Fetched inventory items:", inventoryItems);
+    
+            // Group products by their categories and filter by variant color
+            const productsByCategory = {};
+            const categoryNames = {}; // To store category names by product ID
+    
+            for (let item of inventoryItems) {
+                if (!item.productId) continue;
+    
+                const matchingVariants = item.variants.filter(variant => variant.color.toLowerCase() === color.toLowerCase());
+    
+                if (matchingVariants.length > 0) {
+                    console.log("Matching variants:", matchingVariants.length);
+                    const product = item.productId;
+                    const category = await Category.findById(product.category).lean();
+                    const categoryName = category.name.toLowerCase();
+    
+                    if (!productsByCategory[categoryName]) {
+                        productsByCategory[categoryName] = [];
+                    }
+    
+                    // Store category name by product ID
+                    categoryNames[product._id] = categoryName;
+    
+                    // Only add the product if it hasn't been added already
+                    if (!productsByCategory[categoryName].some(p => p._id.equals(product._id))) {
+                        productsByCategory[categoryName].push(product);
+                    }
+                }
+            }
+            console.log("Products grouped by category:", productsByCategory);
+    
+            const clothes = productsByCategory['clothes'] || [];
+            const shoes = productsByCategory['shoes'] || [];
+            const accessories = productsByCategory['accessories'] || [];
+            const bags = productsByCategory['bags'] || [];
+    
+            if (clothes.length === 0) {
+                console.log("No matching clothes found for the specified criteria");
+            }
+            if (shoes.length === 0) {
+                console.log("No matching shoes found for the specified criteria");
+            }
+            if (accessories.length === 0) {
+                console.log("No matching accessories found for the specified criteria");
+            }
+            if (bags.length === 0) {
+                console.log("No matching bags found for the specified criteria");
+            }
+    
+            let outfits = [];
+    
+            // Generate all possible combinations
+            for (let cloth of clothes) {
+                for (let shoe of shoes) {
+                    let baseOutfit = {
+                        products: [cloth, shoe],
+                        totalPrice: cloth.price + shoe.price
+                    };
+    
+                    if (baseOutfit.totalPrice <= budgetNumber) {
+                        outfits.push({ ...baseOutfit });
+                    }
+    
+                    for (let accessory of accessories) {
+                        if (baseOutfit.totalPrice + accessory.price <= budgetNumber) {
+                            outfits.push({
+                                products: [...baseOutfit.products, accessory],
+                                totalPrice: baseOutfit.totalPrice + accessory.price
+                            });
+                        }
+                    }
+    
+                    for (let bag of bags) {
+                        if (baseOutfit.totalPrice + bag.price <= budgetNumber) {
+                            outfits.push({
+                                products: [...baseOutfit.products, bag],
+                                totalPrice: baseOutfit.totalPrice + bag.price
+                            });
+                        }
+                    }
+    
+                    for (let accessory of accessories) {
+                        for (let bag of bags) {
+                            if (baseOutfit.totalPrice + accessory.price + bag.price <= budgetNumber) {
+                                outfits.push({
+                                    products: [...baseOutfit.products, accessory, bag],
+                                    totalPrice: baseOutfit.totalPrice + accessory.price + bag.price
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+    
+            // Generate combinations of just two categories, ensuring clothes are included
+            for (let cloth of clothes) {
+                for (let accessory of accessories) {
+                    if (cloth.price + accessory.price <= budgetNumber) {
+                        outfits.push({
+                            products: [cloth, accessory],
+                            totalPrice: cloth.price + accessory.price
+                        });
+                    }
+                }
+                for (let bag of bags) {
+                    if (cloth.price + bag.price <= budgetNumber) {
+                        outfits.push({
+                            products: [cloth, bag],
+                            totalPrice: cloth.price + bag.price
+                        });
+                    }
+                }
+            }
+    
+            if (outfits.length === 0) {
+                console.log("No outfits found within the budget");
+                return res.status(200).json({ message: 'No outfits found within the budget.' });
+            }
+    
+            // Filter to keep only the outfits with the maximum number of products
+            const maxProductCount = Math.max(...outfits.map(outfit => outfit.products.length));
+            const filteredOutfits = outfits.filter(outfit => outfit.products.length === maxProductCount);
+    
+            // Remove duplicates by using a set to track unique product combinations
+            const uniqueOutfits = [];
+            const seenCombinations = new Set();
+    
+            for (let outfit of filteredOutfits) {
+                const hasClothes = outfit.products.some(p => categoryNames[p._id.toString()] === 'clothes');
+                if (!hasClothes) continue;
+    
+                const sortedProductIds = outfit.products.map(p => p._id.toString()).sort();
+                const combinationKey = sortedProductIds.join('-');
+                if (!seenCombinations.has(combinationKey)) {
+                    seenCombinations.add(combinationKey);
+                    uniqueOutfits.push(outfit);
+                }
+            }
+    
+            // Sort outfits by totalPrice (optional)
+            uniqueOutfits.sort((a, b) => a.totalPrice - b.totalPrice);
+    
+            res.status(200).json(uniqueOutfits);
+        } catch (error) {
+            console.error("Error in makeancomboOutfit:", error);
+            next(createError.InternalServerError(error.message));
+        }
+    }
+    
+    
+    ,    
+
+    async makeOutfit(req, res, next) {
+        try {
+            const { color, budget, gender, style } = req.query;
+            if (!color || !budget || !gender) {
+                console.log("Color, budget, or gender missing");
+                return next(createError.BadRequest('Color, budget, and gender are required.'));
+            }
+    
+            // Convert budget to a number
+            const budgetNumber = parseFloat(budget);
+            if (isNaN(budgetNumber)) {
+                console.log("Invalid budget");
+                return next(createError.BadRequest('Budget must be a valid number.'));
+            }
+    
+            // Define styles and associated tags
+            const styles = {
+                formal: ["formal", "semiformal", "embroidered", "stitched", "3-piece", "shirt collar", "band collar", "plain", "regular fit", "round collar"],
+                fancy: ["fancy", "festive", "embellished", "schiffli", "jacquard", "radiant", "block-print", "chundri crochet", "silk", "raw silk", "digital printed"],
+                casual: ["casual", "causal", "caual", "unstitched", "wash n wear", "twil", "cotton", "lawn", "slub lawn", "printed", "solid"],
+                traditional: ["traditional", "pur noor", "khaadi net"],
+                modern: ["modern"]
+            };
+    
+            // Fetch products that have the specified gender tag
+            const genderTag = await Tag.findOne({ name: gender.toLowerCase() }).lean();
+            if (!genderTag) {
+                console.log("Gender tag not found");
+                return next(createError.BadRequest('Invalid gender specified.'));
+            }
+    
+            let productQuery = { tags: genderTag._id };
+    
+            // If style is provided, add style tags to the query
+            if (style && styles[style.toLowerCase()]) {
+                const styleTags = await Tag.find({ name: { $in: styles[style.toLowerCase()] } }).lean();
+                const styleTagIds = styleTags.map(tag => tag._id);
+                console.log("Fetched style tags:", styleTags);
+    
+                // Update query to include style tags along with gender tag
+                productQuery.tags = { $all: [genderTag._id], $in: styleTagIds };
+            }
+    
+            const productsWithGenderAndStyleTags = await Product.find(productQuery).populate('tags category').lean();
+            console.log("Fetched products with gender and style tags:", productsWithGenderAndStyleTags);
+    
+            // Fetch inventory items and filter by color in variants
+            const inventoryItems = await Inventory.find({ productId: { $in: productsWithGenderAndStyleTags.map(p => p._id) } }).populate('productId').lean();
+            console.log("Fetched inventory items:", inventoryItems);
+    
+            // Group products by their categories and filter by variant color
+            const productsByCategory = {};
+            const categoryNames = {}; // To store category names by product ID
+    
+            for (let item of inventoryItems) {
+                if (!item.productId) continue;
+    
+                const matchingVariants = item.variants.filter(variant => variant.color.toLowerCase() === color.toLowerCase());
+    
+                if (matchingVariants.length > 0) {
+                    console.log("Matching variants:", matchingVariants.length);
+                    const product = item.productId;
+                    const category = await Category.findById(product.category).lean();
+                    const categoryName = category.name.toLowerCase();
+    
+                    if (!productsByCategory[categoryName]) {
+                        productsByCategory[categoryName] = [];
+                    }
+    
+                    // Store category name by product ID
+                    categoryNames[product._id] = categoryName;
+    
+                    // Only add the product if it hasn't been added already
+                    if (!productsByCategory[categoryName].some(p => p._id.equals(product._id))) {
+                        productsByCategory[categoryName].push(product);
+                    }
+                }
+            }
+            console.log("Products grouped by category:", productsByCategory);
+    
+            const clothes = productsByCategory['clothes'] || [];
+            const shoes = productsByCategory['shoes'] || [];
+            const accessories = productsByCategory['accessories'] || [];
+            const bags = productsByCategory['bags'] || [];
+    
+            let outfits = [];
+    
+            // Generate all possible combinations
+            for (let cloth of clothes) {
+                let baseOutfit = {
+                    products: [cloth],
+                    totalPrice: cloth.price
+                };
+    
+                if (baseOutfit.totalPrice <= budgetNumber) {
+                    outfits.push({ ...baseOutfit });
+                }
+    
+                for (let shoe of shoes) {
+                    if (baseOutfit.totalPrice + shoe.price <= budgetNumber) {
+                        outfits.push({
+                            products: [...baseOutfit.products, shoe],
+                            totalPrice: baseOutfit.totalPrice + shoe.price
+                        });
+                    }
+                }
+    
+                for (let accessory of accessories) {
+                    if (baseOutfit.totalPrice + accessory.price <= budgetNumber) {
+                        outfits.push({
+                            products: [...baseOutfit.products, accessory],
+                            totalPrice: baseOutfit.totalPrice + accessory.price
+                        });
+                    }
+                }
+    
+                for (let bag of bags) {
+                    if (baseOutfit.totalPrice + bag.price <= budgetNumber) {
+                        outfits.push({
+                            products: [...baseOutfit.products, bag],
+                            totalPrice: baseOutfit.totalPrice + bag.price
+                        });
+                    }
+                }
+    
+                for (let shoe of shoes) {
+                    for (let accessory of accessories) {
+                        if (baseOutfit.totalPrice + shoe.price + accessory.price <= budgetNumber) {
+                            outfits.push({
+                                products: [...baseOutfit.products, shoe, accessory],
+                                totalPrice: baseOutfit.totalPrice + shoe.price + accessory.price
+                            });
+                        }
+                    }
+    
+                    for (let bag of bags) {
+                        if (baseOutfit.totalPrice + shoe.price + bag.price <= budgetNumber) {
+                            outfits.push({
+                                products: [...baseOutfit.products, shoe, bag],
+                                totalPrice: baseOutfit.totalPrice + shoe.price + bag.price
+                            });
+                        }
+                    }
+    
+                    for (let accessory of accessories) {
+                        for (let bag of bags) {
+                            if (baseOutfit.totalPrice + shoe.price + accessory.price + bag.price <= budgetNumber) {
+                                outfits.push({
+                                    products: [...baseOutfit.products, shoe, accessory, bag],
+                                    totalPrice: baseOutfit.totalPrice + shoe.price + accessory.price + bag.price
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+    
+            // Also allow outfits with just one product from the clothes category
+            for (let cloth of clothes) {
+                if (cloth.price <= budgetNumber) {
+                    outfits.push({
+                        products: [cloth],
+                        totalPrice: cloth.price
+                    });
+                }
+            }
+    
+            if (outfits.length === 0) {
+                console.log("No outfits found within the budget");
+                return res.status(200).json({ message: 'No outfits found within the budget.' });
+            }
+    
+            // Filter to keep only the outfits with the maximum number of products
+            const maxProductCount = Math.max(...outfits.map(outfit => outfit.products.length));
+            const filteredOutfits = outfits.filter(outfit => outfit.products.length === maxProductCount);
+    
+            // Remove duplicates by using a set to track unique product combinations
+            const uniqueOutfits = [];
+            const seenCombinations = new Set();
+    
+            for (let outfit of filteredOutfits) {
+                const hasClothes = outfit.products.some(p => categoryNames[p._id.toString()] === 'clothes');
+                if (!hasClothes) continue;
+    
+                const sortedProductIds = outfit.products.map(p => p._id.toString()).sort();
+                const combinationKey = sortedProductIds.join('-');
+                if (!seenCombinations.has(combinationKey)) {
+                    seenCombinations.add(combinationKey);
+                    uniqueOutfits.push(outfit);
+                }
+            }
+    
+            // Sort outfits by totalPrice (optional)
+            uniqueOutfits.sort((a, b) => a.totalPrice - b.totalPrice);
+    
+            res.status(200).json(uniqueOutfits);
+        } catch (error) {
+            console.error("Error in makeOutfit:", error);
+            next(createError.InternalServerError(error.message));
+        }
+    }
+    
+,    
+    
     async createProduct(req, res, next) {
         try {
             const userId = req.payload.aud; // Assuming your authentication middleware sets this
@@ -69,10 +474,16 @@ const ProductController = {
         }
     },
 
-    // Updated to include 'tags' in populate methods
+    
     async getAllProducts(req, res, next) {
         try {
-            const products = await Product.find().populate('brandId').populate('category').populate('tags');
+            let sort = {};
+            if (req.query.sortBy) {
+                const [key, order] = req.query.sortBy.split(':');
+                sort[key] = order === 'desc' ? -1 : 1;
+            }
+
+            const products = await Product.find().populate('brandId category tags').sort(sort);
             res.status(200).json(products);
         } catch (error) {
             next(createError.InternalServerError(error.message));
@@ -102,6 +513,44 @@ const ProductController = {
         }
     },
 
+    async getProductsByCategory(req, res, next) {
+        try {
+            let sort = {};
+            if (req.query.sortBy) {
+                const [key, order] = req.query.sortBy.split(':');
+                sort[key] = order === 'desc' ? -1 : 1;
+            }
+            console.log('Sorting by:', sort);  // Debug: Check the sort object
+    
+            const { categoryId } = req.params;
+            const products = await Product.find({ category: categoryId })
+                .populate('brandId category tags')
+                .sort(sort);
+    
+            console.log('Fetched products:', products.length);  // Debug: Check the fetched count
+            res.status(200).json(products);
+        } catch (error) {
+            console.log('Error fetching products by category:', error);  // Debug: Error details
+            next(createError.InternalServerError(error.message));
+        }
+    }
+    ,      
+    async getProductsByTags(req, res, next) {
+        try {
+            const { tagIds } = req.query; // Assuming tagIds are passed as a comma-separated string
+            console.log(tagIds);
+            const tagArray = tagIds.split(',').map(tag => new mongoose.Types.ObjectId(tag));
+            const products = await Product.find({ tags: { $all: tagArray } }) // Change to $all for AND relationship
+                .populate('brandId')
+                .populate('category')
+                .populate('tags');
+            console.log(products);
+            res.status(200).json(products);
+        } catch (error) {
+            next(createError.InternalServerError(error.message));
+        }
+    }
+      ,
     // Updated to handle tag addition/removal and populate 'tags'
     async updateProduct(req, res, next) {
         try {

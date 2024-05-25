@@ -21,6 +21,7 @@ const UserController = {
             const userId = req.payload.aud;
     
             const user = await User.findById(userId);
+            console.log("ive found user: "+ user);
             if (!user) {
                 throw createError.NotFound("User not found");
             }
@@ -32,14 +33,18 @@ const UserController = {
     },
     async updateUser(req, res, next) {
         try {
+            console("inside api")
             const userId = req.payload.aud;
+            console.log("req " +userId)
             const userToUpdate = await User.findById(userId);
     
             if (!userToUpdate) {
+                console.log("no user");
                 throw createError.NotFound("User not found");
             }
     
             if (req.user.role !== 'Admin' && req.user._id.toString() !== userToUpdate._id.toString()) {
+                console.log("no permission");
                 throw createError.Forbidden("You don't have permission to update this user");
             }
     
