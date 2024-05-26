@@ -9,6 +9,8 @@ router.post('/createtag', verifyAccessToken, TagController.createTag); // Update
 // Route to get all tags
 router.get('/tags', TagController.getAllTags); // Updated route and controller method
 
+router.get('/tagsname', TagController.getAllTagsName); // Updated route and controller method
+
 // Route to get a single tag by ID
 router.get('/tag/:id', verifyAccessToken, TagController.getTagById); // Updated route and controller method
 

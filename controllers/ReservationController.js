@@ -7,10 +7,10 @@ const Vendor = require('../Models/Vendor'); // Add this line to import the Vendo
 
 
 const ReservationController = {
-    async createReservation(req, res, next) {
+     async createReservation(req, res, next) {
         try {
             const userId = req.payload.aud; // Extract user ID from JWT payload
-            const { productId, inventoryId, variant } = req.body;
+            const { productId, storeId, variant } = req.body;
     
             // Attempt to find all existing reservations for the user
             let reservations = await Reservation.find({ userId });
@@ -21,11 +21,11 @@ const ReservationController = {
             }, 0);
     
             if (activeItemCount >= 3) {
-                return res.status(400).json({ message: "Limit of 3 active reservations exceeded." });
+                return res.status(400).json({ message: "Limit of 3 active reservations reached." });
             }
     
-            // Validate the inventory availability for the given variant
-            const inventory = await Inventory.findById(inventoryId);
+            // Validate the inventory availability for the given variant and store
+            const inventory = await Inventory.findOne({ storeId: storeId, productId: productId });
             const variantInInventory = inventory.variants.find(v => 
                 v.color === variant.color && v.size === variant.size);
     
@@ -35,7 +35,7 @@ const ReservationController = {
     
             const newItem = {
                 productId,
-                inventoryId,
+                inventoryId: inventory._id,
                 variant,
                 status: 'Active'  // Add item status as "Active"
             };
@@ -49,8 +49,8 @@ const ReservationController = {
             console.error('Reservation Error:', error);
             next(createError.InternalServerError());
         }
-    },    
-    
+    },
+
 
     async updateExpiredReservations(req, res, next) {
         const now = new Date();

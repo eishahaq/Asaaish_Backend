@@ -22,6 +22,7 @@ const UserController = {
             const userId = req.payload.aud;
     
             const user = await User.findById(userId);
+            console.log("ive found user: "+ user);
             if (!user) {
                 throw createError.NotFound("User not found");
             }

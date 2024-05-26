@@ -174,34 +174,123 @@ async getProductsByStore(req, res, next) {
         }
     },
 
+    async getAvailableProducts(req, res, next) {
+        try {
+            // Find all inventory items with quantity > 0
+            const inventoryItems = await Inventory.find({
+                'variants.quantity': { $gt: 0 }
+            }).populate('productId');
+    
+            // Filter products and their available variants
+            const products = {};
+    
+            inventoryItems.forEach(item => {
+                const product = item.productId;
+                if (!products[product._id]) {
+                    products[product._id] = {
+                        productId: product._id,
+                        name: product.name,
+                        description: product.description,
+                        price: product.price,
+                        images: product.images,
+                        availableVariants: {}
+                    };
+                }
+    
+                item.variants.forEach(variant => {
+                    if (variant.quantity > 0) {
+                        if (!products[product._id].availableVariants[variant.color]) {
+                            products[product._id].availableVariants[variant.color] = new Set();
+                        }
+                        products[product._id].availableVariants[variant.color].add(variant.size);
+                    }
+                });
+            });
+    
+            // Convert sets to arrays for JSON serialization
+            Object.keys(products).forEach(productId => {
+                const variants = products[productId].availableVariants;
+                Object.keys(variants).forEach(color => {
+                    variants[color] = Array.from(variants[color]);
+                });
+            });
+    
+            res.json(Object.values(products));
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Server Error');
+        }
+    },    
+
+    async getAvailableProductVariants(req, res, next) {
+        const { productId } = req.params;
+    
+        try {
+            const inventoryItems = await Inventory.find({ productId: productId }).populate('storeId').populate('productId');
+    
+            if (!inventoryItems.length) {
+                return res.status(404).json({ message: 'No inventory found for given product' });
+            }
+    
+            const result = inventoryItems.map(item => {
+                const variants = item.variants
+                    .filter(variant => variant.quantity > 0)
+                    .map(variant => ({
+                        color: variant.color,
+                        size: variant.size,
+                        quantity: variant.quantity,
+                        _id: variant._id
+                    }));
+    
+                return {
+                    _id: item._id,
+                    productId: item.productId,
+                    storeId: item.storeId,
+                    variants: variants
+                };
+            });
+    
+            res.status(200).json(result);
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Server Error');
+        }
+    }
+    
+    ,
+    
+
     async getProductVariants(req, res, next) {
         const { productId } = req.params;
-
-  try {
-    const inventoryItems = await Inventory.find({ productId: productId });
     
-    let variants = {};
-    
-    inventoryItems.forEach((item) => {
-      item.variants.forEach((variant) => {
-        if (!variants[variant.color]) {
-          variants[variant.color] = new Set();
+        try {
+            const inventoryItems = await Inventory.find({ productId: productId });
+            
+            let variants = {};
+            
+            inventoryItems.forEach((item) => {
+                item.variants.forEach((variant) => {
+                    if (variant.quantity > 0) {
+                        if (!variants[variant.color]) {
+                            variants[variant.color] = new Set();
+                        }
+                        variants[variant.color].add(variant.size);
+                    }
+                });
+            });
+            
+            // Convert sets to arrays for JSON serialization
+            Object.keys(variants).forEach(color => {
+                variants[color] = Array.from(variants[color]);
+            });
+            
+            res.json(variants);
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Server Error');
         }
-        variants[variant.color].add(variant.size);
-      });
-    });
-    
-    // Convert sets to arrays for JSON serialization
-    Object.keys(variants).forEach(color => {
-      variants[color] = Array.from(variants[color]);
-    });
-    
-    res.json(variants);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Server Error');
-  }
-},
+    }
+    ,
 
 async getAllInventoryLocations(req, res, next) {
     try {
@@ -280,6 +369,31 @@ async getAllStoreLocationsForProduct(req, res, next) {
         res.json(locations);
     } catch (error) {
         console.error(error);
+        next(error);
+    }
+},
+async getStoresByVariant(req, res, next) {
+    try {
+        const { productId, color, size } = req.query;
+        if (!productId || !color || !size) {
+            return next(createError.BadRequest('Product ID, color, and size are required.'));
+        }
+
+        // Find inventory items with the given product ID and variant
+        const inventoryItems = await Inventory.find({
+            productId,
+            variants: { $elemMatch: { color, size } }
+        }).populate('storeId');
+
+        if (!inventoryItems.length) {
+            return res.status(404).json({ message: 'No stores found for the given variant.' });
+        }
+
+        // Extract unique stores from the inventory items
+        const stores = inventoryItems.map(item => item.storeId);
+
+        res.status(200).json(stores);
+    } catch (error) {
         next(error);
     }
 }

@@ -9,30 +9,30 @@ const mongoose = require('mongoose');
 const CartController = {
     async addToCart(req, res, next) {
         try {
-            const userId = req.payload.aud; // Assuming your authentication middleware sets this
-            console.log(`userId: ${userId}`);
+            const userId = req.payload.aud;
             const { productId, inventoryId, quantity, variant } = req.body;
-            console.log(`product id ${productId} inventory id ${inventoryId} quantity ${quantity} variant ${variant}`);    
+            console.log(`product id ${productId} inventory id ${inventoryId} quantity ${quantity} variant ${variant.color} ${variant.size}`);    
 
             // Check inventory availability
             const inventoryItem = await Inventory.findById(inventoryId);
-            console.log(`inventory item ${inventoryItem}`);
             if (!inventoryItem) throw createError.NotFound('Inventory item not found');
+            console.log("inv exits" + inventoryItem);
 
             const variantInInventory = inventoryItem.variants.find(v => 
                 v.color === variant.color && v.size === variant.size
             );
+            console.log("variant exits" + variantInInventory);
 
             if (!variantInInventory || variantInInventory.quantity < quantity) {
                 throw createError.BadRequest('Requested quantity exceeds available stock');
             }
-            console.log(`variant in inventory item ${variantInInventory}`);
+
             let cart = await Cart.findOne({ userId });
-            console.log(`cart: ${cart}`);
             if (!cart) {
+                console.log("no cart");
                 cart = new Cart({ userId, items: [] });
             }
-
+            console.log("cart "+ cart);
             const itemIndex = cart.items.findIndex(item =>
                 item.productId.toString() === productId &&
                 item.variant.color === variant.color &&
@@ -40,14 +40,12 @@ const CartController = {
             );
 
             if (itemIndex > -1) {
-                // Update existing item quantity, respecting inventory limits
                 let newQuantity = cart.items[itemIndex].quantity + quantity;
                 if (newQuantity > variantInInventory.quantity) {
                     throw createError.BadRequest('Cannot exceed available inventory quantity');
                 }
                 cart.items[itemIndex].quantity = newQuantity;
             } else {
-                // Add new item to cart
                 cart.items.push({ productId, inventoryId, quantity, variant });
             }
 
@@ -58,11 +56,55 @@ const CartController = {
         }
     },
 
+     async addToCartClosest (req, res, next){
+        try {
+            const userId = req.payload.aud;
+            const { productId, storeId, quantity, variant } = req.body;
+    
+            // Validate the inventory availability for the given variant and store
+            const inventory = await Inventory.findOne({ storeId: storeId, productId: productId });
+            if (!inventory) {
+                return res.status(404).json({ message: 'Inventory item not found' });
+            }
+    
+            const variantInInventory = inventory.variants.find(v => 
+                v.color === variant.color && v.size === variant.size);
+    
+            if (!variantInInventory || variantInInventory.quantity < quantity) {
+                return res.status(401).json({ message: 'Requested quantity exceeds available stock' });
+            }
+    
+            let cart = await Cart.findOne({ userId });
+            if (!cart) {
+                cart = new Cart({ userId, items: [] });
+            }
+    
+            const itemIndex = cart.items.findIndex(item =>
+                item.productId.toString() === productId &&
+                item.variant.color === variant.color &&
+                item.variant.size === variant.size
+            );
+    
+            if (itemIndex > -1) {
+                let newQuantity = cart.items[itemIndex].quantity + quantity;
+                if (newQuantity > variantInInventory.quantity) {
+                    return res.status(400).json({ message: 'Cannot exceed available inventory quantity' });
+                }
+                cart.items[itemIndex].quantity = newQuantity;
+            } else {
+                cart.items.push({ productId, inventoryId: inventory._id, quantity, variant });
+            }
+    
+            await cart.save();
+            res.status(200).json(cart);
+        } catch (error) {
+            next(error);
+        }},
+
     async getCart(req, res, next) {
         try {
             const userId = req.payload.aud;
-            console.log(`userId: ${userId}`);
-            // Populate both the product and the brand details within each product
+            console.log("imhere"+ userId);
             const cart = await Cart.findOne({ userId })
                                     .populate({
                                         path: 'items.productId',
@@ -79,16 +121,14 @@ const CartController = {
         }
     },
     
-
     async removeFromCart(req, res, next) {
         try {
             const userId = req.payload.aud;
-            const { productId, variant } = req.body; // Expect variant details to match.
+            const { productId, variant } = req.body; 
     
             const cart = await Cart.findOne({ userId });
             if (!cart) throw createError.NotFound('Cart not found');
     
-            // Filter out the item to remove.
             cart.items = cart.items.filter(item =>
                 !(item.productId.toString() === productId &&
                   item.variant.color === variant.color &&
@@ -101,7 +141,6 @@ const CartController = {
             next(error);
         }
     },
-    
 
     async updateCartItem(req, res, next) {
         try {
@@ -124,7 +163,6 @@ const CartController = {
     
             if (itemIndex === -1) throw createError.NotFound('Item not found in cart');
     
-            // Ensure the requested quantity does not exceed available stock
             const variantInInventory = inventoryItem.variants.find(v => 
                 v.color === variant.color && v.size === variant.size
             );
@@ -141,14 +179,12 @@ const CartController = {
         }
     },
     
-
     async checkout(req, res, next) {
         try {
             const userId = req.payload.aud;
             const cart = await Cart.findOne({ userId });
             if (!cart || cart.items.length === 0) throw createError.BadRequest('Cart is empty');
     
-            // Example logic for each cart item
             for (const item of cart.items) {
                 const inventoryItem = await Inventory.findById(item.inventoryId);
                 const variant = inventoryItem.variants.find(v =>
@@ -158,27 +194,19 @@ const CartController = {
                     throw createError.BadRequest(`Not enough stock for ${item.productId}`);
                 }
     
-                // Deduct the quantity from inventory
                 variant.quantity -= item.quantity;
-    
-                // Here, you would also create an order item based on the cart item
-                // and perform any additional logic required for order processing
             }
     
-            // Save all inventory updates; consider transactional operations for production use
             await Promise.all(cart.items.map(item => Inventory.findById(item.inventoryId).save()));
     
-            // Clear the cart after successful checkout
             cart.items = [];
             await cart.save();
     
-            // Respond with success or order details
             res.status(200).json({ message: 'Checkout successful', cart });
         } catch (error) {
             next(error);
         }
     },
-    
 };
 
 module.exports = CartController;

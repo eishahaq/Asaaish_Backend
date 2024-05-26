@@ -82,7 +82,7 @@ const AuthenticationController = {
             if (user.status === "INACTIVE") throw createError.NotFound('User has been deleted');
 
             const isMatch = await user.isValidPassword(result.password);
-            if (!isMatch) throw createError.Unauthorized('Username/password not valid');
+            if (!isMatch) throw createError.Unauthorized('Password not valid');
 
             const accessToken = await signAccessToken(user.id);
             const refreshToken = await signRefreshToken(user.id);

@@ -16,8 +16,12 @@ router.get('/getproducts/:id', ProductController.getProductById);
 
 router.get('/getproductsbybrand/:brandId', ProductController.getProductsByBrand); 
 
-//router.get('/productsbyvendor', verifyAccessToken, ProductController.getProductsByVendor);
+router.get('/getproductsbycategory/:categoryId', ProductController.getProductsByCategory);
+router.get('/getproductsbytags', ProductController.getProductsByTags);
+router.get('/outfit', ProductController.makeOutfit);
+router.get('/combooutfit', ProductController.makeancomboOutfit);
 
+//router.get('/productsbyvendor', verifyAccessToken, ProductController.getProductsByVendor);
 router.put('/updateproducts/:id', verifyAccessToken, ProductController.updateProduct); 
 
 router.delete('/deleteproducts/:id', verifyAccessToken, ProductController.deleteProduct); 

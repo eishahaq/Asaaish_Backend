@@ -26,6 +26,11 @@ router.get('/location/:inventoryId', InventoryController.getStoreLocationByInven
 
 router.get('/location/product/:productId/', InventoryController.getAllStoreLocationsForProduct);
 
+router.get('/getAvailableProducts', InventoryController.getAvailableProducts);
+
+router.get('/getAvailableProductVariants/:productId', InventoryController.getAvailableProductVariants);
+
+router.get('/getStoresByVariant', InventoryController.getStoresByVariant);
 
 router.put('/updateinventory/:id', verifyAccessToken, InventoryController.updateInventory);
 
