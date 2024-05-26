@@ -1,103 +1,199 @@
 // File: controllers/OrderController.js
 const Order = require('../Models/Order');
-const Cart = require('../Models/Cart');
-const createError = require('http-errors');
-const mongoose = require('mongoose');
+const Product = require('../Models/Product');
+const Brand = require('../Models/Brand');
+const Vendor = require('../Models/Vendor');
+const Inventory = require('../Models/Inventory');
 
+const createError = require('http-errors');
+const transporter = require('../config/mailConfig')
 const OrderController = {
-    async checkout(req, res, next) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
+    async createOrder(req, res) {
         try {
             const userId = req.payload.aud;
-            const {
-              paymentMethod, deliveryLocation, shippingDetails
-            } = req.body;
-            const cart = await Cart.findOne({ userId });
-            if (!cart || cart.items.length === 0) throw createError.BadRequest('Cart is empty');
-
-            let total = 0;
-            // Validation and inventory updates as previously discussed
-
-            // Incorporate shipping and customer contact details into the order
-            const order = await Order.create([{
+            const { items, total, paymentMethod, shippingDetails, deliveryLocation } = req.body;
+            const order = new Order({
                 userId,
-                items: cart.items,
+                items,
                 total,
                 paymentMethod,
                 shippingDetails,
-                deliveryLocation: {
-                  type: 'Point',
-                  coordinates: deliveryLocation // [longitude, latitude]
-                },
-                status: 'Pending'
-            }], { session });
+                deliveryLocation
+            });
 
-            // Clear the cart
-            cart.items = [];
-            await cart.save({ session });
+            await order.save();
 
-            await session.commitTransaction();
-            session.endSession();
+            const emailContent = `
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.5; font-size: 16px; color: #333; }
+                        h1 { color: #0056b3; }
+                        ul { list-style-type: none; padding: 0; }
+                        li { margin: 5px 0; }
+                        .total { font-size: 18px; font-weight: bold; color: #ff4500; }
+                        .container { background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>Thank you for your order!</h1>
+                        <p>Your order has been placed successfully and will be processed shortly.</p>
+                        <h2>Order Details:</h2>
+                        <p class="total">Total: $${total}</p>
+                        <h3>Items Ordered:</h3>
+                        <ul>
+                            ${items.map(item => `
+                                <li>
+                                    ${item.quantity} x ${item.productName} (Size: ${item.variant.size}, Color: ${item.variant.color}) - $${item.price.toFixed(2)} each
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <h3>Shipping Details:</h3>
+                        <p>${shippingDetails.firstName} ${shippingDetails.lastName}</p>
+                        <p>${shippingDetails.address}, ${shippingDetails.city}, ${shippingDetails.zipCode}, ${shippingDetails.country}</p>
+                    </div>
+                </body>
+                </html>
+            `;
 
-            res.status(201).json(order);
+        await transporter.sendMail({
+          from: 'jazil10@hotmail.com', 
+          to: 'zinneerahrafiq10@gmail.com', 
+          subject: 'Order Confirmation',
+          html: emailContent
+      });
+
+            res.status(201).json({ message: 'Order created successfully', order });
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
-            next(error);
+            console.error('Order Creation Error:', error);
+            res.status(500).json({ message: 'Internal server error' });
         }
     },
-    
-    async getUserOrders(req, res, next) {
+
+    async getOrderDetails(req, res) {
         try {
             const userId = req.payload.aud;
-            const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+            const orders = await Order.find({ userId }).populate('items.productId');
             res.status(200).json(orders);
         } catch (error) {
-            next(error);
+            console.error('Error fetching order details:', error);
+            res.status(500).json({ message: 'Internal server error' });
         }
     },
 
-    // Get details of a specific order
-    async getOrderDetails(req, res, next) {
+    async updateOrderItemStatus(req, res) {
         try {
-            const userId = req.payload.aud;
-            const { orderId } = req.params;
-            const order = await Order.findOne({ _id: orderId, userId });
-            if (!order) throw createError.NotFound('Order not found');
-            res.status(200).json(order);
+            const { orderId, itemId, status } = req.body;
+            const order = await Order.findOneAndUpdate(
+                { "_id": orderId, "items._id": itemId },
+                { "$set": { "items.$.status": status } },
+                { new: true }
+            );
+
+            if (!order) {
+                return res.status(404).json({ message: "Order item not found." });
+            }
+            res.status(200).json({ message: 'Order item status updated successfully', order });
         } catch (error) {
-            next(error);
+            console.error('Error updating order item status:', error);
+            res.status(500).json({ message: 'Internal server error' });
         }
     },
 
-    // Update an existing order (e.g., update status or shipping details)
-    async updateOrder(req, res, next) {
-        try {
-            const userId = req.payload.aud;
-            const { orderId } = req.params;
-            const update = req.body; // This should be validated to ensure only allowable fields are updated.
+    // async getVendorOrders(req, res) {
+    //     try {
+    //         const vendorId = req.payload.aud;  
+    //         console.log(vendorId);
+    //         // Fetch the vendor to get associated brands
+    //         const vendor = await Vendor.findOne({ user: vendorId }).populate('brand');
+    //         console.log(vendor);
+    //         if (!vendor) {
+    //             return res.status(404).json({ message: 'Vendor not found.' });
+    //         }
+    
+    //         console.log('Brands associated with vendor:', vendor.brand);
 
-            const order = await Order.findOneAndUpdate({ _id: orderId, userId }, update, { new: true });
-            if (!order) throw createError.NotFound('Order not found');
-            res.status(200).json(order);
-        } catch (error) {
-            next(error);
-        }
-    },
-
-    // Delete an order (if applicable to your business logic)
-    async deleteOrder(req, res, next) {
+    //         // Fetch products linked to these brands
+    //         const products = await Product.find({ brandId: { $in: vendor.brand } }).select('_id');
+    //         console.log('Products found:', products);
+    
+    //         if (products.length === 0) {
+    //             return res.status(404).json({ message: 'No products linked to vendor brands found.' });
+    //         }
+    
+    //         const productIds = products.map(product => product._id);
+    
+    //         // Fetch orders containing these products
+    //         const orders = await Order.find({
+    //             'items.productId': { $in: productIds }
+    //         }).populate({
+    //             path: 'items.productId',
+    //             populate: { path: 'brandId' }
+    //         });
+    
+    //         console.log('Orders found:', orders);
+    //         res.status(200).json(orders);
+    //     } catch (error) {
+    //         console.error('Error fetching orders for vendor:', error);
+    //         res.status(500).json({ message: 'Internal server error' });
+    //     }
+    // }
+    
+    async getVendorOrders(req, res, next) {
         try {
-            const userId = req.payload.aud;
-            const { orderId } = req.params;
-            const result = await Order.deleteOne({ _id: orderId, userId });
-            if (result.deletedCount === 0) throw createError.NotFound('Order not found or user mismatch');
-            res.status(200).json({ message: 'Order deleted successfully' });
+            const vendorId = req.payload.aud;
+            console.log('Vendor ID from token:', vendorId);
+    
+            // Find the vendor based on the user ID
+            const vendor = await Vendor.findOne({ user: vendorId }).exec();
+            if (!vendor) {
+                console.log('Vendor not found for user ID:', vendorId);
+                return res.status(404).json({ message: "Vendor not found" });
+            }
+    
+            console.log('Vendor found:', vendor);
+    
+            // Get the store IDs associated with the vendor
+            const storeIds = vendor.stores;
+            console.log('Store IDs associated with vendor:', storeIds);
+    
+            // Find all inventories related to these stores
+            const inventories = await Inventory.find({ storeId: { $in: storeIds } }).exec();
+            console.log('Inventories found:', inventories);
+    
+            // Extract the inventory IDs
+            const inventoryIds = inventories.map(inventory => inventory._id);
+            console.log('Inventory IDs:', inventoryIds);
+    
+            if (inventoryIds.length === 0) {
+                console.log('No inventory IDs found for the vendor stores.');
+                return res.status(404).json({ message: "No inventory found for vendor stores" });
+            }
+    
+            // Find orders that contain items with these inventory IDs
+            const orders = await Order.find({
+                'items.inventoryId': { $in: inventoryIds }
+            }).populate({
+                path: 'items.productId',
+                populate: { path: 'brandId' }
+            }).populate('items.inventoryId');
+    
+            console.log('Orders found:', orders);
+    
+            if (orders.length === 0) {
+                console.log('No orders found for the given inventory IDs.');
+            }
+    
+            res.status(200).json(orders);
         } catch (error) {
-            next(error);
+            console.error('Error fetching orders for vendor:', error);
+            next(createError.InternalServerError(error));
         }
     }
+    
+    
+    
 };
 
 module.exports = OrderController;

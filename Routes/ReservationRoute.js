@@ -9,4 +9,7 @@ router.get('/vendor', verifyAccessToken, ReservationController.getVendorReservat
 //router.delete('/cancel/:reservationId', verifyAccessToken, ReservationController.cancelReservation);
 router.get('/user', verifyAccessToken, ReservationController.updateExpiredReservations, ReservationController.getUserReservations);
 router.put('/cancel/customer/:reservationId/:itemId', verifyAccessToken, ReservationController.cancelReservationCustomer);
+router.put('/cancel/vendor/:reservationId/:itemId', verifyAccessToken, ReservationController.cancelReservationVendor);
+router.put('/complete/vendor/:reservationId/:itemId', verifyAccessToken, ReservationController.completeReservationVendor);
+
 module.exports = router;

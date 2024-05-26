@@ -3,113 +3,14 @@ const Product = require('../Models/Product');
 const Inventory = require('../Models/Inventory');
 const User = require('../Models/User');
 const createError = require('http-errors');
+const Vendor = require('../Models/Vendor'); // Add this line to import the Vendor model
+
 
 const ReservationController = {
-    // async createReservation(req, res, next) {
-    //     try {
-    //         const userId = req.payload.aud; // Extract user ID from JWT payload
-    //         const { productId, inventoryId, variant } = req.body;
-
-    //         // Check if the user has exceeded the reservation limit
-    //         const reservationCount = await Reservation.countDocuments({ userId });
-    //         if (reservationCount >= 3) {
-    //             return res.status(400).json({ message: "Limit of 3 active reservations exceeded." });
-    //         }
-
-    //         // Check if the product variant is already reserved by this user
-    //         const existingReservation = await Reservation.findOne({
-    //             userId,
-    //             'items.productId': productId,
-    //             'items.inventoryId': inventoryId,
-    //             'items.variant.color': variant.color,
-    //             'items.variant.size': variant.size
-    //         });
-
-    //         if (existingReservation) {
-    //             return res.status(400).json({ message: "You have already reserved this product variant." });
-    //         }
-
-    //         // Validate the inventory availability for the given variant
-    //         const inventory = await Inventory.findById(inventoryId);
-    //         const variantInInventory = inventory.variants.find(v => 
-    //             v.color === variant.color && v.size === variant.size);
-
-    //         if (!variantInInventory || variantInInventory.quantity < 1) {
-    //             return res.status(401).json({ message: "Insufficient stock for this variant." });
-    //         }
-
-    //         // Create the reservation
-    //         const reservation = new Reservation({
-    //             userId,
-    //             items: [{
-    //                 productId,
-    //                 inventoryId,
-    //                 variant
-    //             }]
-    //         });
-
-    //         await reservation.save();
-    //         res.status(201).json({ message: 'Reservation created successfully.', reservation });
-    //     } catch (error) {
-    //         console.error('Reservation Error:', error);
-    //         next(createError.InternalServerError());
-    //     }
-    // },
-
-    // async createReservation(req, res, next) {
-    //     try {
-    //         const userId = req.payload.aud; // Extract user ID from JWT payload
-    //         const { productId, inventoryId, variant } = req.body;
-    
-    //         // Validate ObjectId for inventoryId and productId
-           
-    
-    //         // Attempt to find an existing reservation for the user
-    //         let reservation = await Reservation.findOne({ userId });
-    
-    //         if (reservation && reservation.items.length >= 3) {
-    //             return res.status(400).json({ message: "Limit of 3 active reservations exceeded." });
-    //         }
-    
-    //         // Validate the inventory availability for the given variant
-    //         const inventory = await Inventory.findById(inventoryId);
-    //         const variantInInventory = inventory.variants.find(v => 
-    //             v.color === variant.color && v.size === variant.size);
-    
-    //         if (!variantInInventory || variantInInventory.quantity < 1) {
-    //             return res.status(401).json({ message: "Insufficient stock for this variant." });
-    //         }
-    
-    //         const newItem = {
-    //             productId,
-    //             inventoryId,
-    //             variant,
-    //             status: 'Active'  // Add item status as "Active"
-    //         };
-    
-    //         if (reservation) {
-    //             // Add new item to existing reservation
-    //             reservation.items.push(newItem);
-    //         } else {
-    //             // Create new reservation if none exists
-    //             reservation = new Reservation({
-    //                 userId,
-    //                 items: [newItem]
-    //             });
-    //         }
-    
-    //         await reservation.save();
-    //         res.status(201).json({ message: 'Reservation updated successfully.', reservation });
-    //     } catch (error) {
-    //         console.error('Reservation Error:', error);
-    //         next(createError.InternalServerError());
-    //     }
-    // },  
-    
-    async createReservation(req, res, next) {
+     async createReservation(req, res, next) {
         try {
             const userId = req.payload.aud; // Extract user ID from JWT payload
-            const { productId, inventoryId, variant } = req.body;
+            const { productId, storeId, variant } = req.body;
     
             // Attempt to find all existing reservations for the user
             let reservations = await Reservation.find({ userId });
@@ -120,11 +21,11 @@ const ReservationController = {
             }, 0);
     
             if (activeItemCount >= 3) {
-                return res.status(400).json({ message: "Limit of 3 active reservations exceeded." });
+                return res.status(400).json({ message: "Limit of 3 active reservations reached." });
             }
     
-            // Validate the inventory availability for the given variant
-            const inventory = await Inventory.findById(inventoryId);
+            // Validate the inventory availability for the given variant and store
+            const inventory = await Inventory.findOne({ storeId: storeId, productId: productId });
             const variantInInventory = inventory.variants.find(v => 
                 v.color === variant.color && v.size === variant.size);
     
@@ -134,7 +35,7 @@ const ReservationController = {
     
             const newItem = {
                 productId,
-                inventoryId,
+                inventoryId: inventory._id,
                 variant,
                 status: 'Active'  // Add item status as "Active"
             };
@@ -148,39 +49,8 @@ const ReservationController = {
             console.error('Reservation Error:', error);
             next(createError.InternalServerError());
         }
-    },    
-    
+    },
 
-    // async getUserReservations(req, res, next) {
-    //     try {
-    //         const userId = req.payload.aud; // Get user ID from JWT payload
-    //         const reservations = await Reservation.find({ userId })
-    //             .populate('items.productId')
-    //             .populate('items.inventoryId');
-
-    //         res.status(200).json(reservations);
-    //     } catch (error) {
-    //         next(createError.InternalServerError(error));
-    //     }
-    // },
-    
-    // async getUserReservations(req, res, next) {
-    //     try {
-    //         const userId = req.payload.aud; // Get user ID from JWT payload
-    //         console.log('userrr' + userId);
-    //         // Adjust the find query to include a check for items with status 'Active'
-    //         const reservations = await Reservation.find({
-    //             userId,
-    //             'items.status': "Active", // This condition filters the reservations to include only those items that are 'Active'
-    //         })
-    //         .populate('items.productId')
-    //         .populate('items.inventoryId');
-    //         console.log(reservations);
-    //         res.status(200).json(reservations);
-    //     } catch (error) {
-    //         next(createError.InternalServerError(error));
-    //     }
-    // },
 
     async updateExpiredReservations(req, res, next) {
         const now = new Date();
@@ -224,57 +94,83 @@ const ReservationController = {
     async getUserReservations(req, res, next) {
         try {
             const userId = req.payload.aud;  // Extract user ID from JWT payload
-
+            console.log(`User ID: ${userId}`);
+    
             // Retrieve all reservations for the user
             const reservations = await Reservation.find({ userId })
                 .populate('items.productId')
                 .populate('items.inventoryId')
                 .lean();  // Use lean() for faster execution since we just need to process the data
-
+            console.log(`Reservations found for user ${userId}: ${JSON.stringify(reservations)}`);
+    
             // Filter out only active items from each reservation
             const activeReservations = reservations.map(reservation => {
                 const activeItems = reservation.items.filter(item => item.status === 'Active');
+                console.log(`Active items for reservation ${reservation._id}: ${JSON.stringify(activeItems)}`);
                 return { ...reservation, items: activeItems };
             }).filter(reservation => reservation.items.length > 0);  // Filter out reservations with no active items
-
+    
+            console.log(`Active reservations for user ${userId}: ${JSON.stringify(activeReservations)}`);
+    
             if (!activeReservations.length) {
+                console.log(`No active reservations found for user ${userId}`);
                 return res.status(404).json({ message: 'No active reservations found.' });
             }
-
+    
             res.status(200).json(activeReservations);
         } catch (error) {
             console.error('Error retrieving user reservations:', error);
             next(createError.InternalServerError());
         }
     },
-
     
 
     async getVendorReservations(req, res, next) {
         try {
-            const vendorId = req.payload.aud; // Get vendor ID from JWT payload
-            const products = await Product.find({ vendor: vendorId });
-            const productIds = products.map(product => product._id);
-
+            const vendorId = req.payload.aud;
+    
+            // Find the vendor associated with the user
+            const vendor = await Vendor.findOne({ user: vendorId }).exec();
+            if (!vendor) {
+                console.log('Vendor not found for user ID:', vendorId);
+                return res.status(404).json({ message: "Vendor not found" });
+            }
+    
+            // Get the store IDs associated with the vendor
+            const storeIds = vendor.stores;
+    
+            // Find the inventories associated with the store IDs
+            const inventories = await Inventory.find({ storeId: { $in: storeIds } }).exec();
+            const inventoryIds = inventories.map(inventory => inventory._id);
+    
+            // Find reservations that have items with inventory IDs in the vendor's stores
             const reservations = await Reservation.find({
-                'items.productId': { $in: productIds }
+                'items.inventoryId': { $in: inventoryIds }
             }).populate('items.productId').populate('items.inventoryId');
-
-            res.status(200).json(reservations);
+    
+            // Map over the reservations to include the product code in the response
+            const reservationsWithProductCode = reservations.map(reservation => {
+                const itemsWithProductCode = reservation.items.map(item => ({
+                    ...item.toObject(),
+                    productCode: item.productId.productCode
+                }));
+                return {
+                    ...reservation.toObject(),
+                    items: itemsWithProductCode
+                };
+            });
+    
+            res.status(200).json(reservationsWithProductCode);
         } catch (error) {
             next(createError.InternalServerError(error));
         }
     },
-
+    
+    
     async cancelReservationCustomer(req, res, next) {
         try {
             console.log("hello api");
             
-            // if (!req.payload.aud) {
-            //     console.log("hello error");
-            //     return res.status(401).json({ message: "No authentication token provided." });
-        
-            // }
             console.log("hello api 2");
 
             const userId = req.payload.aud; // Extract user ID from JWT payload
@@ -303,21 +199,90 @@ const ReservationController = {
         try {
             const reservationId = req.params.reservationId;
             const itemId = req.params.itemId; // Assuming you pass the itemId to specifically cancel an item within a reservation
-    
+            
+            console.log(`Received request to cancel reservation item. Reservation ID: ${reservationId}, Item ID: ${itemId}`);
+            
             // Find the reservation and update the specific item
             const reservation = await Reservation.findOneAndUpdate(
                 { "_id": reservationId, "items._id": itemId },
                 { "$set": { "items.$.status": "Cancelled by Vendor" } },
                 { new: true } // Return the updated document
             );
-    
+            
+            console.log(`Reservation after update attempt: ${JSON.stringify(reservation)}`);
+            
             if (!reservation) {
+                console.log(`Reservation or item not found. Reservation ID: ${reservationId}, Item ID: ${itemId}`);
                 return res.status(404).json({ message: "Reservation or item not found." });
             }
-    
+            
+            console.log(`Reservation item cancelled by vendor successfully. Reservation: ${JSON.stringify(reservation)}`);
             res.status(200).json({ message: 'Reservation item cancelled by vendor successfully.', reservation });
         } catch (error) {
             console.error('Error cancelling reservation item by vendor:', error);
+            next(createError.InternalServerError(error));
+        }
+    },
+    async completeReservationVendor(req, res, next) {
+        try {
+            const reservationId = req.params.reservationId;
+            const itemId = req.params.itemId; // Assuming you pass the itemId to specifically complete an item within a reservation
+            
+            console.log(`Received request to complete reservation item. Reservation ID: ${reservationId}, Item ID: ${itemId}`);
+            
+            // Find the reservation
+            const reservation = await Reservation.findOne({ "_id": reservationId, "items._id": itemId });
+            
+            if (!reservation) {
+                console.log(`Reservation or item not found. Reservation ID: ${reservationId}, Item ID: ${itemId}`);
+                return res.status(404).json({ message: "Reservation or item not found." });
+            }
+            
+            // Find the specific item within the reservation
+            const item = reservation.items.id(itemId);
+            
+            if (!item) {
+                console.log(`Item not found. Item ID: ${itemId}`);
+                return res.status(404).json({ message: "Item not found." });
+            }
+            
+            // Check if item is already completed
+            if (item.status === 'Completed') {
+                console.log(`Item already completed. Item ID: ${itemId}`);
+                return res.status(400).json({ message: "Item already completed." });
+            }
+            
+            // Update item status to 'Completed'
+            item.status = 'Completed';
+            
+            // Find the inventory and update the quantity
+            const inventory = await Inventory.findById(item.inventoryId);
+            const variantInInventory = inventory.variants.find(v => 
+                v.color === item.variant.color && v.size === item.variant.size);
+            
+            if (!variantInInventory) {
+                console.log(`Inventory variant not found. Inventory ID: ${item.inventoryId}`);
+                return res.status(404).json({ message: "Inventory variant not found." });
+            }
+            
+            // Reduce quantity by 1
+            if (variantInInventory.quantity < 1) {
+                console.log(`Insufficient stock for inventory variant. Inventory ID: ${item.inventoryId}`);
+                return res.status(400).json({ message: "Insufficient stock for inventory variant." });
+            }
+            
+            variantInInventory.quantity -= 1;
+            
+            // Save the updated inventory
+            await inventory.save();
+            
+            // Save the updated reservation
+            await reservation.save();
+            
+            console.log(`Reservation item completed successfully. Reservation: ${JSON.stringify(reservation)}`);
+            res.status(200).json({ message: 'Reservation item completed successfully.', reservation });
+        } catch (error) {
+            console.error('Error completing reservation item by vendor:', error);
             next(createError.InternalServerError(error));
         }
     }

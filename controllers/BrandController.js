@@ -26,7 +26,6 @@ const BrandController = {
             next(error);
         }
     },
-
     // Get all brands
     async getAllBrands(req, res, next) {
         try {
