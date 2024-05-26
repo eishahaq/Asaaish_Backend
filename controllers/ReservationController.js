@@ -2,8 +2,8 @@ const Reservation = require('../Models/Reservation');
 const Product = require('../Models/Product');
 const Inventory = require('../Models/Inventory');
 const User = require('../Models/User');
+const Vendor = require('../Models/Vendor');
 const createError = require('http-errors');
-const Vendor = require('../Models/Vendor'); // Add this line to import the Vendor model
 
 
 const ReservationController = {
