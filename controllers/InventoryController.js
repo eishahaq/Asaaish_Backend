@@ -1,7 +1,7 @@
 const Inventory = require('../Models/Inventory'); // Adjust the path as necessary
 const Store = require('../Models/Store');
 const User = require('../Models/User');
-const Product = require('../models/Product');
+const Product = require('../Models/Product');
 const createError = require('http-errors');
 const Vendor = require('../Models/Vendor');
 const mongoose = require('mongoose');

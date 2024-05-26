@@ -18,6 +18,7 @@ const Tag = require('./Routes/TagRoute');
 const Category = require('./Routes/CategoryRoute');
 const Collection = require('./Routes/CollectionRoute');
 const Reservation = require('./Routes/ReservationRoute');
+const FCM = require('./Routes/FcmRoute');
 
 
 const app = express()
@@ -58,11 +59,11 @@ app.use('/Tag', Tag);
 app.use('/Category', Category);
 app.use('/Collection', Collection);
 app.use('/Reservation', Reservation);
-
+app.use('/FCM', FCM);
 
 
 app.get('/', (req, res) => { 
-  res.send('Hello, Azure! This is a Node.js application.'); 
+  res.send('Hello, Azure/Back4App! This is a Node.js application.'); 
 }); 
 
 
