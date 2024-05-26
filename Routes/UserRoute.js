@@ -8,10 +8,11 @@ const AuthenticationController = require('../controllers/AuthenticationControlle
 
 // User routes
 router.get('/', verifyAccessToken, UserController.getUserById);
+router.put('/update', verifyAccessToken, UserController.updateUser);
 router.delete('/:id', verifyAccessToken, UserController.deleteUser);
 router.get('/users', UserController.getAllUsers); 
 router.get('/vendorbyid', verifyAccessToken,UserController.getVendorByUserId); 
-
+router.put('/updateUser', verifyAccessToken, UserController.updateUser)
 // Authentication routes
 router.post('/signup', AuthenticationController.signup);
 router.post('/login', AuthenticationController.login);

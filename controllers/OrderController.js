@@ -119,7 +119,7 @@ const OrderController = {
     
             // Fetch products linked to these brands
             const products = await Product.find({ brandId: { $in: vendor.brand } }).select('_id');
-            console.log(`Products found: ${products.length}`, products);
+            console.log(`Products found: ${products.length}, products`);
     
             if (products.length === 0) {
                 return res.status(404).json({ message: 'No products linked to vendor brands found.' });
@@ -136,7 +136,7 @@ const OrderController = {
                 populate: { path: 'brandId' }
             });
     
-            console.log(`Orders found: ${orders.length}`, orders);
+            console.log(`Orders found: ${orders.length}, orders`);
     
             if (orders.length === 0) {
                 return res.status(404).json({ message: 'No orders found for the vendor products.' });
