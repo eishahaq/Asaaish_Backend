@@ -98,8 +98,18 @@ const ReservationController = {
     
             // Retrieve all reservations for the user
             const reservations = await Reservation.find({ userId })
-                .populate('items.productId')
-                .populate('items.inventoryId')
+                .populate({
+                    path: 'items.productId',
+                    model: 'Product'
+                })
+                .populate({
+                    path: 'items.inventoryId',
+                    model: 'Inventory',
+                    populate: {
+                        path: 'storeId',
+                        model: 'Store'
+                    }
+                })
                 .lean();  // Use lean() for faster execution since we just need to process the data
             console.log(`Reservations found for user ${userId}: ${JSON.stringify(reservations)}`);
     
@@ -123,7 +133,6 @@ const ReservationController = {
             next(createError.InternalServerError());
         }
     },
-    
 
     async getVendorReservations(req, res, next) {
         try {
