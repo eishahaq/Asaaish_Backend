@@ -17,7 +17,7 @@ const OrderController = {
                 shippingDetails,
                 deliveryLocation
             });
-
+            console.log(deliveryLocation);
             await order.save();
 
             const emailContent = `
@@ -149,7 +149,18 @@ const OrderController = {
         }
     },
     
-    
+    async getUserOrders(req, res) {
+        try {
+            const userId = req.payload.aud;
+            const orders = await Order.find({ userId })
+                .populate('items.productId')
+                .populate('items.inventoryId');
+            res.status(200).json(orders);
+        } catch (error) {
+            console.error('Error fetching user orders:', error);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    }
     
 };
 

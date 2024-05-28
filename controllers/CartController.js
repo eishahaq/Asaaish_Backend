@@ -178,6 +178,25 @@ const CartController = {
             next(error);
         }
     },
+
+    async clearCart(req, res, next) {
+        try {
+          const userId = req.payload.aud;
+          let cart = await Cart.findOne({ userId });
+    
+          if (!cart) {
+            return res.status(404).json({ message: 'Cart not found' });
+          }
+    
+          cart.items = [];
+          await cart.save();
+    
+          res.status(200).json({ message: 'Cart cleared successfully' });
+        } catch (error) {
+          next(error);
+        }
+      },
+
     
     async checkout(req, res, next) {
         try {

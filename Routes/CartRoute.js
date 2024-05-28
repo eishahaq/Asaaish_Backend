@@ -9,5 +9,6 @@ router.get('/', verifyAccessToken, CartController.getCart);
 router.delete('/remove', verifyAccessToken, CartController.removeFromCart); // Define params accordingly
 router.post('/update', verifyAccessToken, CartController.updateCartItem); // Define params accordingly
 router.post('/checkout', verifyAccessToken, CartController.checkout);
+router.delete('/clear', verifyAccessToken, CartController.clearCart); // Add this line
 
 module.exports = router;
