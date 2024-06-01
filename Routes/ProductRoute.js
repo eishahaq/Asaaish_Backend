@@ -12,6 +12,9 @@ router.post('/createproducts', verifyAccessToken, ProductController.createProduc
 
 router.get('/getproducts', ProductController.getAllProducts); 
 
+router.get('/getdiffproducts', ProductController.getAllProducts); 
+
+
 router.get('/getproducts/:id', ProductController.getProductById); 
 
 router.get('/getproductsbybrand/:brandId', ProductController.getProductsByBrand); 
