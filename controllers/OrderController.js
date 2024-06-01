@@ -3,7 +3,7 @@ const Order = require('../Models/Order');
 const Product = require('../Models/Product');
 const Vendor = require('../Models/Vendor');
 const createError = require('http-errors');
-const transporter = require('../config/mailConfig')
+// const transporter = require('../config/mailConfig')
 const OrderController = {
     async createOrder(req, res) {
         try {
@@ -20,46 +20,46 @@ const OrderController = {
             console.log(deliveryLocation);
             await order.save();
 
-            const emailContent = `
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.5; font-size: 16px; color: #333; }
-                        h1 { color: #0056b3; }
-                        ul { list-style-type: none; padding: 0; }
-                        li { margin: 5px 0; }
-                        .total { font-size: 18px; font-weight: bold; color: #ff4500; }
-                        .container { background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <h1>Thank you for your order!</h1>
-                        <p>Your order has been placed successfully and will be processed shortly.</p>
-                        <h2>Order Details:</h2>
-                        <p class="total">Total: $${total}</p>
-                        <h3>Items Ordered:</h3>
-                        <ul>
-                            ${items.map(item => `
-                                <li>
-                                    ${item.quantity} x ${item.productName} (Size: ${item.variant.size}, Color: ${item.variant.color}) - $${item.price.toFixed(2)} each
-                                </li>
-                            `).join('')}
-                        </ul>
-                        <h3>Shipping Details:</h3>
-                        <p>${shippingDetails.firstName} ${shippingDetails.lastName}</p>
-                        <p>${shippingDetails.address}, ${shippingDetails.city}, ${shippingDetails.zipCode}, ${shippingDetails.country}</p>
-                    </div>
-                </body>
-                </html>
-            `;
+      //       const emailContent = `
+      //           <html>
+      //           <head>
+      //               <style>
+      //                   body { font-family: Arial, sans-serif; line-height: 1.5; font-size: 16px; color: #333; }
+      //                   h1 { color: #0056b3; }
+      //                   ul { list-style-type: none; padding: 0; }
+      //                   li { margin: 5px 0; }
+      //                   .total { font-size: 18px; font-weight: bold; color: #ff4500; }
+      //                   .container { background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+      //               </style>
+      //           </head>
+      //           <body>
+      //               <div class="container">
+      //                   <h1>Thank you for your order!</h1>
+      //                   <p>Your order has been placed successfully and will be processed shortly.</p>
+      //                   <h2>Order Details:</h2>
+      //                   <p class="total">Total: $${total}</p>
+      //                   <h3>Items Ordered:</h3>
+      //                   <ul>
+      //                       ${items.map(item => `
+      //                           <li>
+      //                               ${item.quantity} x ${item.productName} (Size: ${item.variant.size}, Color: ${item.variant.color}) - $${item.price.toFixed(2)} each
+      //                           </li>
+      //                       `).join('')}
+      //                   </ul>
+      //                   <h3>Shipping Details:</h3>
+      //                   <p>${shippingDetails.firstName} ${shippingDetails.lastName}</p>
+      //                   <p>${shippingDetails.address}, ${shippingDetails.city}, ${shippingDetails.zipCode}, ${shippingDetails.country}</p>
+      //               </div>
+      //           </body>
+      //           </html>
+      //       `;
 
-        await transporter.sendMail({
-          from: 'classic.airmated@hotmail.com', 
-          to: 'zinneerahrafiq10@gmail.com', 
-          subject: 'Order Confirmation',
-          html: emailContent
-      });
+      //   await transporter.sendMail({
+      //     from: 'classic.airmated@hotmail.com', 
+      //     to: 'zinneerahrafiq10@gmail.com', 
+      //     subject: 'Order Confirmation',
+      //     html: emailContent
+      // });
 
             res.status(201).json({ message: 'Order created successfully', order });
         } catch (error) {
