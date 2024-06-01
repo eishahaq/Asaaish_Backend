@@ -55,7 +55,7 @@ const OrderController = {
             `;
 
         await transporter.sendMail({
-          from: 'jazil10@hotmail.com', 
+          from: 'classic.airmated@hotmail.com', 
           to: 'zinneerahrafiq10@gmail.com', 
           subject: 'Order Confirmation',
           html: emailContent

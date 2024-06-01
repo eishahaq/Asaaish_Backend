@@ -15,8 +15,65 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const mongoose = require('mongoose');
 
+const shuffleArray = (array) => {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+};
 
+const interleaveProducts = (products) => {
+    const brandGroups = products.reduce((acc, product) => {
+        const brandId = product.brandId._id.toString();
+        if (!acc[brandId]) {
+            acc[brandId] = [];
+        }
+        acc[brandId].push(product);
+        return acc;
+    }, {});
 
+    const brandKeys = Object.keys(brandGroups);
+    brandKeys.forEach(brand => {
+        brandGroups[brand] = shuffleArray(brandGroups[brand]);
+    });
+
+    const result = [];
+    const brandIndices = brandKeys.map(() => 0);
+    let prevBrand = null;
+    let count = 0;
+
+    while (result.length < products.length) {
+        let added = false;
+        for (let i = 0; i < brandKeys.length; i++) {
+            const brand = brandKeys[i];
+            const index = brandIndices[i];
+
+            if (index < brandGroups[brand].length && (brand !== prevBrand || count < 2)) {
+                result.push(brandGroups[brand][index]);
+                brandIndices[i]++;
+                added = true;
+
+                if (brand === prevBrand) {
+                    count++;
+                } else {
+                    prevBrand = brand;
+                    count = 1;
+                }
+
+                if (result.length >= products.length) {
+                    break;
+                }
+            }
+        }
+
+        if (!added) {
+            break;
+        }
+    }
+
+    return result;
+};
 const ProductController = {
     async makeancomboOutfit(req, res, next) {
         try {
@@ -510,6 +567,25 @@ const ProductController = {
 
             const products = await Product.find().populate('brandId category tags').sort(sort);
             res.status(200).json(products);
+        } catch (error) {
+            next(createError.InternalServerError(error.message));
+        }
+    },
+
+    async getAllProductsShuffled(req, res, next) {
+        try {
+            // Fetch all products and populate necessary fields
+            let products = await Product.find().populate('brandId category tags').exec();
+    
+            let mixedProducts = [];
+            while (products.length > 0) {
+                if (products.length > 0) mixedProducts.push(products.shift()); // Start
+                if (products.length > 0) mixedProducts.push(products.pop());   // End
+                if (products.length > 0) mixedProducts.push(products.splice(Math.floor(products.length / 2), 1)[0]); // Middle
+            }
+    
+            // Respond with the mixed products
+            res.status(200).json(mixedProducts);
         } catch (error) {
             next(createError.InternalServerError(error.message));
         }

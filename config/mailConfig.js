@@ -4,8 +4,8 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
     service: 'hotmail', // Use the 'hotmail' service
     auth: {
-        user: 'jazil10@hotmail.com', // Replace with your Hotmail email
-        pass: '1@LeoMessi' // Replace with your Hotmail password
+        user: 'classic.airmated@hotmail.com', // Replace with your Hotmail email
+        pass: '0300360814455' // Replace with your Hotmail password
     }
 });
 
