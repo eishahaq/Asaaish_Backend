@@ -63,6 +63,7 @@ const OrderController = {
 
             res.status(201).json({ message: 'Order created successfully', order });
         } catch (error) {
+            console.log(error);
             console.error('Order Creation Error:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
