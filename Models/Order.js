@@ -10,12 +10,11 @@ const OrderItemSchema = new Schema({
         size: String
     },
     price: { type: Number, required: true },
-    status: { type: String, default: 'Pending', enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] }  
+    status: { type: String, default: 'Pending', enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] }  // Individual item status
 });
 
 const OrderSchema = new Schema({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    storeId: { type: Schema.Types.ObjectId, ref: 'Store', required: true },  
     items: [OrderItemSchema],
     total: { type: Number, required: true },
     paymentMethod: { type: String, required: true },

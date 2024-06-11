@@ -15,12 +15,12 @@ const ProductSchema = new Schema({
     type: String,
     required: true
   },
-  category: { 
+  category: {
     type: Schema.Types.ObjectId,
     ref: 'Category',
     required: true
   },
-  tags: [{ 
+  tags: [{
     type: Schema.Types.ObjectId,
     ref: 'Tag'
   }],
@@ -33,6 +33,11 @@ const ProductSchema = new Schema({
     discountPercentage: Number,
     description: String,
     validUntil: Date
+  },
+  productCode: {
+    type: String,
+    unique: true,
+    required: true
   }
 });
 

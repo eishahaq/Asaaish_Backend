@@ -10,8 +10,9 @@ router.get('/customers', UserController.getAllCustomers);
 
 router.get('/vendors', UserController.getAllVendors); 
 
+router.get('/userbyid', verifyAccessToken,UserController.getUserById); 
 router.get('/vendorbyid', verifyAccessToken,UserController.getVendorByUserId); 
-
+router.put('/updateUser', verifyAccessToken, UserController.updateUser)
 router.put('/user/:id', verifyAccessToken,UserController.updateUser); 
 
 router.put('/vendor/:id', verifyAccessToken,UserController.updateVendor); 

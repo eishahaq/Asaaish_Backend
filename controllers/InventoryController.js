@@ -79,15 +79,6 @@ const InventoryController = {
         }
     },
 
-    async updateInventory(req, res, next) {
-        try {
-            const updatedInventory = await Inventory.findByIdAndUpdate(req.params.id, req.body, { new: true });
-            if (!updatedInventory) throw createError.NotFound('Inventory not found');
-            res.status(200).json(updatedInventory);
-        } catch (error) {
-            next(error);
-        }
-    },
     
 async getInventoryByStoreAndProduct(req, res, next) {
     try {
@@ -128,15 +119,75 @@ async getProductsByStore(req, res, next) {
     }
 },
 
-    async deleteInventory(req, res, next) {
-        try {
-            const deletedInventory = await Inventory.findByIdAndDelete(req.params.id);
-            if (!deletedInventory) throw createError.NotFound('Inventory not found');
-            res.status(200).json({ message: 'Inventory successfully deleted' });
-        } catch (error) {
-            next(error);
+async updateInventory(req, res, next) {
+    try {
+        console.log('Update Inventory request received'); // Log the entry into the method
+        console.log(`Request params: ${JSON.stringify(req.params)}`); // Log the request parameters
+        console.log(`Request body: ${JSON.stringify(req.body)}`); // Log the request body
+
+        // Ensure the id parameter is present
+        if (!req.params.id) {
+            console.error('Inventory ID parameter is missing');
+            throw createError.BadRequest('Inventory ID parameter is missing');
         }
-    },
+
+        // Extract productCode and variants from request body
+        const { productCode, variants } = req.body;
+
+        // Find product by productCode
+        const product = await Product.findOne({ productCode });
+        if (!product) {
+            console.error('Product not found');
+            throw createError.NotFound('Product not found');
+        }
+
+        // Find the inventory by ID
+        const inventory = await Inventory.findById(req.params.id);
+        if (!inventory) {
+            console.error('Inventory not found');
+            throw createError.NotFound('Inventory not found');
+        }
+
+        // Update the specific variant within the inventory
+        inventory.variants = inventory.variants.map((variant) => {
+            const updatedVariant = variants.find((v) => v.color === variant.color && v.size === variant.size);
+            return updatedVariant ? { ...variant, quantity: updatedVariant.quantity } : variant;
+        });
+
+        // Save the updated inventory
+        inventory.productId = product._id;
+        const updatedInventory = await inventory.save();
+
+        console.log('Updated inventory:', updatedInventory); // Log the updated inventory details
+        res.status(200).json(updatedInventory);
+    } catch (error) {
+        console.error('Error updating inventory:', error.message); // Log any error that occurs
+        next(error);
+    }
+}, 
+
+async deleteInventory(req, res, next) {
+    try {
+        // Extract productCode from request body
+        const { productCode } = req.body;
+
+        // Find product by productCode
+        const product = await Product.findOne({ productCode });
+        if (!product) throw createError.NotFound('Product not found');
+
+        // Delete inventory using product ID and inventory ID from params
+        const deletedInventory = await Inventory.findOneAndDelete({
+            _id: req.params.id,
+            productId: product._id
+        });
+
+        if (!deletedInventory) throw createError.NotFound('Inventory not found');
+        res.status(200).json({ message: 'Inventory successfully deleted' });
+    } catch (error) {
+        next(error);
+    }
+},
+
 
     async getProductVariants(req, res, next) {
         const { productId } = req.params;

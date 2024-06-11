@@ -22,6 +22,8 @@ router.delete('/deleteproducts/:id', verifyAccessToken, ProductController.delete
 
 router.post('/bulk-import', verifyAccessToken, upload.single('file'), ProductController.bulkImportProducts);
 
-router.get('/by-store/:storeId', ProductController.getProductsByStore);
+router.get('/products-by-store/:storeId', ProductController.getProductsByStore);
+router.get('/inventory-by-store/:storeId', ProductController.getInventoryByStore);
+
 
 module.exports = router;

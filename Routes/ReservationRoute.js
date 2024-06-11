@@ -10,11 +10,13 @@ router.get('/vendor', verifyAccessToken, ReservationController.getVendorReservat
 router.get('/user', verifyAccessToken, ReservationController.updateExpiredReservations, ReservationController.getUserReservations);
 
 router.put('/cancel/customer/:reservationId/:itemId', verifyAccessToken, ReservationController.cancelReservationCustomer);
+router.put('/cancel/vendor/:reservationId/:itemId', verifyAccessToken, ReservationController.cancelReservationVendor);
+router.put('/complete/vendor/:reservationId/:itemId', verifyAccessToken, ReservationController.completeReservationVendor);
 
 router.get('/all', verifyAccessToken, ReservationController.getAllReservations);
 
-router.delete('/:reservationId', verifyAccessToken, ReservationController.deleteReservation);
+router.delete('/reservations/:reservationId/items/:itemId', verifyAccessToken, ReservationController.deleteReservation);
 
-router.put('/:reservationId/:itemId', verifyAccessToken, ReservationController.editReservation);
+router.put('/:reservationId/:itemId', verifyAccessToken, ReservationController.updateReservation);
 
 module.exports = router;

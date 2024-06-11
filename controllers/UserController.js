@@ -3,6 +3,7 @@ const { verifyAccessToken } = require('../Helpers/JwtHelper');
 const Vendor = require('../Models/Vendor');
 const Customer = require('../Models/Customer');
 const createError = require('http-errors');
+const bcrypt = require('bcrypt');
 
 const UserController = {
     async getAllUsers(req, res, next) {
